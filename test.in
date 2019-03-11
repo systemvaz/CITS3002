@@ -1,0 +1,35 @@
+Hello world
+Networks
+The quick brown fox jumps over the lazy evaluator
+Request for Comments: 2068 Hypertext Transfer Protocol -- HTTP/1.1
+The Hypertext Transfer Protocol (HTTP) is an application-level
+protocol for distributed, collaborative, hypermedia information
+systems. HTTP has been in use by the World-Wide Web global
+information initiative since 1990. The first version of HTTP,
+referred to as HTTP/0.9, was a simple protocol for raw data transfer
+across the Internet. HTTP/1.0, as defined by RFC 1945 [6], improved
+the protocol by allowing messages to be in the format of MIME-like
+messages, containing metainformation about the data transferred and
+modifiers on the request/response semantics. However, HTTP/1.0 does
+not sufficiently take into consideration the effects of hierarchical
+proxies, caching, the need for persistent connections, and virtual
+hosts. In addition, the proliferation of incompletely-implemented
+applications calling themselves "HTTP/1.0" has necessitated a
+protocol version change in order for two communicating applications
+to determine each other's true capabilities.
+This specification defines the protocol referred to as "HTTP/1.1".
+This protocol includes more stringent requirements than HTTP/1.0 in
+order to ensure reliable implementation of its features.
+Practical information systems require more functionality than simple
+retrieval, including search, front-end update, and annotation. HTTP
+allows an open-ended set of methods that indicate the purpose of a
+request. It builds on the discipline of reference provided by the
+Uniform Resource Identifier (URI) [3][20], as a location (URL) [4] or
+name (URN) , for indicating the resource to which a method is to be
+applied. Messages are passed in a format similar to that used by
+Internet mail as defined by the Multipurpose Internet Mail Extensions (MIME).
+HTTP is also used as a generic protocol for communication between
+user agents and proxies/gateways to other Internet systems, including
+those supported by the SMTP [16], NNTP [13], FTP [18], Gopher [2],
+and WAIS [10] protocols. In this way, HTTP allows basic hypermedia
+access to resources available from diverse applications.
