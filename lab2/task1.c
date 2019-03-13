@@ -14,4 +14,6 @@ void main (int argc, char* argv[])
     fprintf(stdout, "%d ", bswap_32(buffer));
   }
 
+  printf("\n");
+
 }
