@@ -7,42 +7,21 @@ int main (int argc, char* argv[])
 {
 
   char mystring[] = "Hello World";
-  //unsigned char* p = mystring;
-
-  //unsigned short checkval = checksum_ccitt(p, sizeof(mystring)/sizeof(char));
-  //printf("%i\n", checkval);
 
   FILE* fp = fopen("test.in", "r");
   char buffer[100];
-  int tocheck[1000];
-  int count = 0;
+
+  unsigned short checkval = checksum_ccitt(mystring, sizeof(mystring));
+  printf("%i\n", checkval);
+  printf("-----------------\n");
 
   while (fgets(buffer, sizeof buffer, fp) != NULL)
   {
-
-    //unsigned char* p = buffer;
-    tocheck[count] = checksum_ccitt(buffer, sizeof(buffer)/sizeof(char));
-
-    count++;
-    //unsigned short checkval = checksum_ccitt(p, sizeof(buffer)/sizeof(char));
-    //printf("%i\n", checkval);
+    unsigned short checkvalfile = checksum_ccitt(buffer, sizeof(buffer));
+    printf("%i\n", checkvalfile);
   }
-
   fclose(fp);
-  fopen("soln.out", "r");
-  count = 0;
 
-  while (fgets(buffer, sizeof buffer, fp) != NULL)
-  {
-    int check = atoi(buffer);
-    printf("input:%i  output:%i\n", tocheck[count], check);
-    if (check != tocheck[count])
-    {
-      printf("checksum fail\n");
-    }
-    count++;
-  }
 
-  fclose(fp);
   return 0;
 }

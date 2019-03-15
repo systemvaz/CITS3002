@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <time.h>
+#include <string.h>
 #include <sys/param.h>
 
 #include "checksum_ccitt.c"
@@ -98,6 +99,7 @@ void corrupt_frame(byte frame[], int length, char type)
     }
   }
   else
+
   {
     printf("Incorrect error type argument provided\n");
   }
