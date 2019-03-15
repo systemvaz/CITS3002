@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "checksum.h"
+#include "checksum_ccitt.c"
 
 int main (int argc, char* argv[])
 {
@@ -11,16 +12,16 @@ int main (int argc, char* argv[])
   //unsigned short checkval = checksum_ccitt(p, sizeof(mystring)/sizeof(char));
   //printf("%i\n", checkval);
 
-  FILE* fp = fopen(argv[1], "r");
-  char buffer[50];
+  FILE* fp = fopen("test.in", "r");
+  char buffer[100];
   int tocheck[1000];
   int count = 0;
 
   while (fgets(buffer, sizeof buffer, fp) != NULL)
   {
 
-    unsigned char* p = buffer;
-    tocheck[count] = checksum_ccitt(p, sizeof(buffer)/sizeof(char));
+    //unsigned char* p = buffer;
+    tocheck[count] = checksum_ccitt(buffer, sizeof(buffer)/sizeof(char));
 
     count++;
     //unsigned short checkval = checksum_ccitt(p, sizeof(buffer)/sizeof(char));
