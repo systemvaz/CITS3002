@@ -1,165 +1,200 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
 #include <string.h>
+#include <stdbool.h>
 #include <sys/param.h>
 
 #include "checksum_ccitt.c"
 #include "checksum_crc16.c"
 
-/*  This is a simple function designed to test checksum algorithms.
-    The function randomly corrupts one or more bits of a given frame.
-
-    As corruption is random, you'll need to call srand() from somewhere
-    earlier in your program to ensure different random sequences.
-
-    You may like to devise other forms of corruption and run tests on them.
- */
-
 #define FRAMESIZE 200
+
 typedef unsigned char byte;
-byte frame[FRAMESIZE];
-byte frameog[FRAMESIZE];
-byte save;
+typedef enum {DLL_DATA, DLL_ACK, DLL_NACK} FRAMETYPE;
 
-int countccitt = 0;
-int countcrc = 0;
-int countcompfails = 0;
-
-void randomframes()
+typedef struct
 {
-  srand(time(NULL));
+  FRAMETYPE type;
+  int checksum_crc;
+  int checksum_ccitt;
+  unsigned char data[FRAMESIZE];
+} FRAME;
+
+FRAME frame, og_frame;
+byte save;
+int countcrc = 0;
+int countccitt = 0;
+int countcompfails = 0;
+bool compfail = false;
+
+void random_frames()
+{
+  srand(clock());
   for (int i = 0; i < FRAMESIZE; i++)
   {
-    frame[i] = rand() % 256;
-    frameog[i] = frame[i];
+    frame.data[i] = rand() % 256;
+    og_frame.data[i] = frame.data[i];
+  }
+
+  frame.type = DLL_DATA;
+  frame.checksum_crc = 0;
+  frame.checksum_ccitt = 0;
+  frame.checksum_ccitt = checksum_ccitt(frame.data, FRAMESIZE);
+  frame.checksum_crc = checksum_crc16(frame.data, FRAMESIZE);
+}
+
+//  this is a severe/unrealistic function, swapping adjacent, different chars
+void corrupt_frame_swap(byte frame[], int length)
+{
+  srand(clock());
+  while(true)
+  {
+    int byte = (rand() % (length-1));
+
+    if(frame[byte] != frame[byte+1])
+    {      // ensure chars are different
+      save  = frame[byte];
+      frame[byte] = frame[byte+1];
+      frame[byte+1] = save;
+      break;
+    }
   }
 }
 
-
-void corrupt_frame(byte frame[], int length, char type)
+//  corrupt one character by setting it to the complement of its own value
+void corrupt_frame_complement(byte frame[], int length)
 {
-  srand(time(NULL));
-//  this is a severe/unrealistic function, swapping adjacent, different chars
-  if (type == 's')
+  srand(clock());
+  int byte    = (rand() % length);
+  frame[byte] = ~(frame[byte]) ;
+}
+
+//  corrupt one bit of a byte by toggling its value
+void corrupt_frame_toggle(byte frame[], int length)
+{
+  srand(clock());
+  int byte    = (rand() % length);
+  int bit     = (rand() % NBBY);
+  frame[byte] = (frame[byte] ^ (1UL << bit));
+}
+
+//  corrupt a frame with a burst error
+void corrupt_frame_burst(byte frame[], int length)
+{
+  #define MIN_BURSTLENGTH         10
+  #define MAX_BURSTLENGTH         100
+  int nbits           = (length * NBBY);
+  srand(clock());
+  while(true)
   {
-    while(true)
+    int     b0      = rand() % nbits;
+    int     b1      = rand() % nbits;
+    int	burst	= b1 - b0;
+
+    if(burst >= MIN_BURSTLENGTH && burst <= MAX_BURSTLENGTH)
     {
-        int byte                = (rand() % (length-1));
-        if(frame[byte] != frame[byte+1])
-        {
-          // ensure chars are different
-          save = frame[byte];
-          frame[byte]         = frame[byte+1];
-          frame[byte+1]       = save;
-          break;
-        }
+      for(int b=b0 ; b<b1 ; ++b)
+      {
+        int     byte    = b / NBBY;
+        int     bit     = b % NBBY;
+        frame[byte]     = (frame[byte] | (1UL << bit));
+      }
+      break;
+    }
+  }
+}
+
+void do_checks(int framenum)
+{
+  for (int i = 0; i < FRAMESIZE; i++)
+  {
+    if (og_frame.data[i] != frame.data[i])
+    {
+      compfail = true;
     }
   }
 
-//  corrupt one character by setting it to the complement of its own value
-  else if (type == 'c')
+  if(compfail)
   {
-    int byte    = (rand() % length);
-    frame[byte] = ~(frame[byte]) ;
+    countcompfails++;
+    printf("FRAME: %i | Compare fail detected\n", framenum);
+    compfail = false;
   }
 
-//  corrupt one bit of a byte by toggling its value
-  else if (type == 't')
+  if (frame.checksum_ccitt != checksum_ccitt(frame.data, FRAMESIZE))
   {
-    int byte    = (rand() % length);
-    int bit     = (rand() % NBBY);
-    frame[byte] = (frame[byte] ^ (1UL << bit));
+    countccitt++;
+    printf("FRAME: %i | CCITT fail detected\n", framenum);
   }
-
-//  corrupt a frame with a burst error
-  else if (type == 'b')
+  if (frame.checksum_crc != checksum_crc16(frame.data, FRAMESIZE))
   {
-    #define MIN_BURSTLENGTH         10
-    #define MAX_BURSTLENGTH         100
-    int nbits           = (length * NBBY);
-    while(true)
+    countcrc++;
+    printf("FRAME: %i | CRC16 fail detected\n", framenum);
+  }
+}
+
+void delay(int milli_seconds)
+{
+    clock_t start_time = clock();
+    while (clock() < start_time + milli_seconds)
     {
-      int     b0      = rand() % nbits;
-      int     b1      = rand() % nbits;
-    	int	burst	= b1 - b0;
+    }
+}
 
-      if(burst >= MIN_BURSTLENGTH && burst <= MAX_BURSTLENGTH)
+int main (int argc, char* argv[])
+{
+  if (argc != 3)
+  {
+    printf("<Usage: <PROGRAM_NAME> [type] [chance]\n");
+    printf("Usage example: ./task3 b 2\n");
+    printf("\n");
+    printf("Please include error type and chance as program argument.\n");
+    printf("type: s = swap , c = complement , t = toggle , b = burst\n");
+    printf("chance: 2 = 2pct , 10 = 10pct, 50 = 50pct etc...\n");
+    return -1;
+  }
+  char error_type = *argv[1];
+  int error_chance = atoi(argv[2]);
+  int doing_errors = 0;
+
+  for (int i = 1; i <= 10000; i++)
+  {
+    //delay(10);
+    random_frames();
+    srand(clock());
+    if ((rand() % 100 + 1) <= error_chance)
+    {
+      switch(error_type)
       {
-        for(int b=b0 ; b<b1 ; ++b)
-        {
-          int     byte    = b / NBBY;
-          int     bit     = b % NBBY;
-          frame[byte]     = (frame[byte] | (1UL << bit));
-        }
+        case 's':
+          doing_errors++;
+          corrupt_frame_swap(frame.data, FRAMESIZE);
+          break;
+        case 'c':
+          doing_errors++;
+          corrupt_frame_complement(frame.data, FRAMESIZE);
+          break;
+        case 't':
+          doing_errors++;
+          corrupt_frame_toggle(frame.data, FRAMESIZE);
+          break;
+        case 'b':
+          doing_errors++;
+          corrupt_frame_burst(frame.data, FRAMESIZE);
         break;
       }
     }
-  }
-  else
 
-  {
-    printf("Incorrect error type argument provided\n");
+    do_checks(i);
   }
 
-}
-
-
-void dochecks()
-{
-  unsigned short checkogframeccitt, checkerrframeccitt,
-                 checkogframecrc, checkerrframecrc;
-
-  for (int i = 0; i < FRAMESIZE; i++)
-  {
-    checkogframeccitt = checksum_ccitt(&frameog[i], sizeof(frameog[i]));
-    checkerrframeccitt = checksum_ccitt(&frame[i], sizeof(frame[i]));
-    checkogframecrc = checksum_crc16(&frameog[i], sizeof(frameog[i]));
-    checkerrframecrc = checksum_crc16(&frame[i], sizeof(frame[i]));
-
-    if (frameog[i] != frame[i])
-    {
-      countcompfails++;
-    }
-    if (checkogframeccitt != checkerrframeccitt)
-    {
-      countccitt++;
-      printf("(CCITT) checksum og: %u  | checksum err: %u  | Frame: %i\n", checkogframeccitt, checkerrframeccitt, i);
-    }
-    if (checkogframecrc != checkerrframecrc)
-    {
-      countcrc++;
-      printf("(CRC16) checksum og: %u  | checksum err: %u  | Frame: %i\n", checkogframecrc, checkerrframecrc, i);
-    }
-  }
-
-  printf("------------------------------------\n");
-  printf("CCITT Checksum errors: %i\n", countccitt);
-  printf("CRC Checksum errors: %i\n", countcrc);
-  printf("Direct compare fails: %i\n", countcompfails);
-  printf("------------------------------------\n");
-}
-
-
-int main(int argc, char** argv)
-{
-  if (argc != 2)
-  {
-    printf("Please include error type as program argument.\n");
-    printf("s = swap , c = complement , t = toggle , b = burst\n");
-    return -1;
-  }
-
-  char type = *argv[1];
-
-  for (int i = 0; i <= 100000; i++)
-  {
-    randomframes();
-    corrupt_frame(frame, sizeof(frame)/sizeof(char), type);
-    dochecks();
-  }
-
+  printf("----------------------------------------------\n");
+  printf("RESULTS:\n");
+  printf("REAL ERRORS GENERATED: %i\n", doing_errors);
+  printf("CRC checksum errors detected: %i\n", countcrc);
+  printf("CCITT checksum errors detected: %i\n", countccitt);
+  printf("Direct data compare fails detected: %i\n", countcompfails);
   return 0;
 }
