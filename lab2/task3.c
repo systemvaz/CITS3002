@@ -8,6 +8,7 @@
 
 #include "checksum_ccitt.c"
 #include "checksum_crc16.c"
+#include "task4.c"
 
 #define FRAMESIZE 200
 
@@ -19,6 +20,7 @@ typedef struct
   FRAMETYPE type;
   int checksum_crc;
   int checksum_ccitt;
+  int mychecksum;
   unsigned char data[FRAMESIZE];
 } FRAME;
 
@@ -27,6 +29,7 @@ byte save;
 int countcrc = 0;
 int countccitt = 0;
 int countcompfails = 0;
+int countmychecksum = 0;
 bool compfail = false;
 
 void random_frames()
@@ -41,8 +44,10 @@ void random_frames()
   frame.type = DLL_DATA;
   frame.checksum_crc = 0;
   frame.checksum_ccitt = 0;
+  frame.mychecksum = 0;
   frame.checksum_ccitt = checksum_ccitt(frame.data, FRAMESIZE);
   frame.checksum_crc = checksum_crc16(frame.data, FRAMESIZE);
+  frame.mychecksum = mychecksum(frame.data, FRAMESIZE);
 }
 
 //  this is a severe/unrealistic function, swapping adjacent, different chars
@@ -133,6 +138,11 @@ void do_checks(int framenum)
     countcrc++;
     printf("FRAME: %i | CRC16 fail detected\n", framenum);
   }
+  if (frame.mychecksum != mychecksum(frame.data, FRAMESIZE))
+  {
+    countmychecksum++;
+    printf("FRAME %i | MYCHECKSUM fail detected\n", framenum);
+  }
 }
 
 void delay(int milli_seconds)
@@ -159,7 +169,7 @@ int main (int argc, char* argv[])
   int error_chance = atoi(argv[2]);
   int doing_errors = 0;
 
-  for (int i = 1; i <= 10000; i++)
+  for (int i = 1; i <= 100000; i++)
   {
     //delay(10);
     random_frames();
@@ -195,6 +205,7 @@ int main (int argc, char* argv[])
   printf("REAL ERRORS GENERATED: %i\n", doing_errors);
   printf("CRC checksum errors detected: %i\n", countcrc);
   printf("CCITT checksum errors detected: %i\n", countccitt);
+  printf("MYCHECKSUM checksum errors detected: %i\n", countmychecksum);
   printf("Direct data compare fails detected: %i\n", countcompfails);
   return 0;
 }
