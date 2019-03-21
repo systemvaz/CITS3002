@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
-#include <sys/time.h>
 #include <string.h>
 #include <stdbool.h>
 #include <sys/param.h>
@@ -10,7 +9,7 @@
 #include "checksum_ccitt.c"
 #include "checksum_crc16.c"
 #include "checksum_internet.c"
-#include "my_checksum.c"
+#include "task4.c"
 
 #define FRAMESIZE 200
 
@@ -22,7 +21,6 @@ typedef struct
   FRAMETYPE type;
   int checksum_crc;
   int checksum_ccitt;
-  int checksum_internet;
   int mychecksum;
   unsigned char data[FRAMESIZE];
 } FRAME;
@@ -39,7 +37,7 @@ bool compfail = false;
 void random_frames()
 {
   srand(clock());
-  for (int i = 0; i < FRAMESIZE; i++)
+  for (int i = 0; i <= FRAMESIZE; i++)
   {
     frame.data[i] = rand() % 256;
     og_frame.data[i] = frame.data[i];
@@ -48,12 +46,10 @@ void random_frames()
   frame.type = DLL_DATA;
   frame.checksum_crc = 0;
   frame.checksum_ccitt = 0;
-  frame.checksum_internet = 0;
   frame.mychecksum = 0;
   frame.checksum_ccitt = checksum_ccitt(frame.data, FRAMESIZE);
   frame.checksum_crc = checksum_crc16(frame.data, FRAMESIZE);
-  frame.checksum_internet = checksum_internet((unsigned short*)frame.data, FRAMESIZE);
-  frame.mychecksum = my_checksum(frame.data, FRAMESIZE);
+  frame.mychecksum = mychecksum(frame.data, FRAMESIZE);
 }
 
 //  this is a severe/unrealistic function, swapping adjacent, different chars
@@ -100,8 +96,7 @@ void corrupt_frame_burst(byte frame[], int length)
   #define MIN_BURSTLENGTH         10
   #define MAX_BURSTLENGTH         100
   int nbits           = (length * NBBY);
-  //srand(clock());
-  srand(19);
+  srand(clock());
   while(true)
   {
     int     b0      = rand() % nbits;
@@ -148,35 +143,19 @@ void do_checks(int framenum)
     countcrc++;
     printf("FRAME: %i | CRC16 fail detected\n", framenum);
   }
-  if (frame.checksum_internet != checksum_internet((unsigned short*)frame.data, FRAMESIZE))
-  {
-    countinternetfails++;
-    printf("FRAME: %i | INTERNET fail detected\n", framenum);
-  }
-  if (frame.mychecksum != my_checksum(frame.data, FRAMESIZE))
-  {
-    countmychecksum++;
-    printf("FRAME %i | MYCHECKSUM fail detected\n", framenum);
-  }
+  // if (frame.mychecksum != mychecksum(frame.data, FRAMESIZE))
+  // {
+  //   countmychecksum++;
+  //   printf("FRAME %i | MYCHECKSUM fail detected\n", framenum);
+  // }
 }
 
-int64_t timing(bool start)
+void delay(int milli_seconds)
 {
-  static struct timeval startw, endw;
-  int64_t usecs = 0;
-
-  if(start)
-  {
-    gettimeofday(&startw, NULL);
-  }
-  else
-  {
-    gettimeofday(&endw, NULL);
-    usecs =
-             (endw.tv_sec - startw.tv_sec)*1000000 +
-             (endw.tv_usec - startw.tv_usec);
-  }
-  return usecs;
+    clock_t start_time = clock();
+    while (clock() < start_time + milli_seconds)
+    {
+    }
 }
 
 int main (int argc, char* argv[])
@@ -195,9 +174,9 @@ int main (int argc, char* argv[])
   int error_chance = atoi(argv[2]);
   int doing_errors = 0;
 
-  for (int i = 1; i <= 1000000; i++)
+  for (int i = 1; i <= 10000; i++)
   {
-    timing(true);
+    //delay(10);
     random_frames();
     srand(clock());
     if ((rand() % 100 + 1) <= error_chance)
@@ -227,7 +206,6 @@ int main (int argc, char* argv[])
   }
 
   printf("----------------------------------------------\n");
-  printf("TIME ELAPSED: %li usecs\n", timing(false));
   printf("RESULTS:\n");
   printf("REAL ERRORS GENERATED: %i\n", doing_errors);
   printf("CRC checksum errors detected: %i\n", countcrc);
