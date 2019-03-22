@@ -14,9 +14,9 @@ void main (int argc, char* argv[])
   while (!feof(fp))
   {
     fread(&buffer, 4, 1, fp);
-    //fprintf(stdout, "%d", bswap_32(buffer));
+    printf("line %i || swaped: %d | og: %d | og hex: %.2X\n", i, bswap_32(buffer), buffer, buffer);
+    i++;
   }
-
   printf("\n");
 
 }
