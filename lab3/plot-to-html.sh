@@ -15,7 +15,7 @@ case `uname` in
 esac
 
 # some variables to define our simulation:
-TOPOLOGY="STOPANDWAIT"
+TOPOLOGY="STOPANDWAIT3"
 METRIC="Messages delivered"
 DURATION="7200s"
 EVERY="10"
@@ -34,7 +34,8 @@ then
     exit 1
 fi
 
-function build_html {
+function build_html   {
+
     cat << END_END
 <html>
 <head>
@@ -80,8 +81,7 @@ cat << END_END
   <div id='linechart_material'></div>
 </body>
 </html>
-END_END
-}
+END_END}
 
 
 
