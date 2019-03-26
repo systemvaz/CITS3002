@@ -15,14 +15,14 @@ case `uname` in
 esac
 
 # some variables to define our simulation:
-TOPOLOGY="STOPANDWAIT3"
-METRIC="Messages delivered"
+TOPOLOGY="STOPANDWAIT2_NEGACK"
+METRIC="Average delivery time"
 DURATION="7200s"
 EVERY="10"
 
 # some variables to define our output plot:
-HTML="plot.html"
-TITLE="Number of messages delivered"
+HTML="plot_snw2_negack_dtime.html"
+TITLE="Average Delivery Time"
 XAXIS="seconds"
 
 
@@ -36,7 +36,7 @@ fi
 
 function build_html   {
 
-    cat << END_END
+    cat > $HTML << END_END
 <html>
 <head>
 <!--
@@ -63,14 +63,14 @@ function build_html   {
 
       data.addRows([
 END_END
-
 # the actual simulation, and capturing of the statistics, are done here:
+
     $CNET -W -q -T -e $DURATION -s -f ${EVERY}secs $TOPOLOGY	| \
     grep "$METRIC"						| \
     cut -d: -f 2						| \
-    awk "{ printf(\"        [%d, %s],\n\", ++i * $EVERY, \$1); }"
+    awk "{ printf(\"        [%d, %s],\n\", ++i * $EVERY, \$1); }" | tee -a $HTML
 
-cat << END_END
+cat >> $HTML << END_END
       ]);
       chart.draw(data, options);
     }
@@ -86,5 +86,5 @@ END_END}
 
 
 rm -f $HTML
-build_html > $HTML
+build_html
 echo "output is in $HTML"
