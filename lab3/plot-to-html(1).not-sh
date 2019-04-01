@@ -1,0 +1,99 @@
+#!/bin/sh
+
+# location of the cnet simulator
+case `uname` in
+  Linux)        CNET="/cslinux/bin/cnet-linux"
+                ;;
+
+  Darwin)       export CNETPATH=".:/Volumes/cslinux/adhoc/lib/cnet"
+                CNET="/Volumes/cslinux/bin/cnet-osx"
+                ;;
+
+  *)            echo "$0: cannot determine your architecture"
+                exit 1
+                ;;
+esac
+
+# some variables to define our simulations:
+TOPOLOGY1="STOPANDWAIT"
+TOPOLOGY2="PIGGYBACK"
+
+METRIC="Frames transmitted"
+DURATION="3600s"
+EVERY="10"
+
+# some variables to define our output plot:
+HTML="plot.html"
+TITLE="Frames transmitted"
+XAXIS="seconds"
+
+
+# --  nothing needs changing below this line  --------------------------
+
+if [ ! -x $CNET ]
+then
+    echo "$CNET not found or is not executable"
+    exit 1
+fi
+
+function run_simulation {
+    $CNET -W -q -T -e $DURATION -s -f ${EVERY}secs $1		| \
+    grep "$METRIC"						| \
+    cut -d: -f 2						| \
+    awk "{ printf(\"%d %s\n\", ++i * $EVERY, \$1); }"
+}
+
+function build_html {
+    cat << END_END
+<html>
+<head>
+<!--
+  <meta http-equiv='refresh' content='10' />
+-->
+  <script type='text/javascript' src='https://www.google.com/jsapi'></script>
+  <script type='text/javascript'>
+    google.load('visualization', '1.1', {packages: ['line']});
+    google.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+      var options = {
+        chart: {
+          title: '$TITLE'
+        },
+        width:  600,
+        height: 400
+      };
+      var chart = new google.charts.Line(document.getElementById('linechart_material'));
+      var data = new google.visualization.DataTable();
+
+      data.addColumn('number', 'seconds');
+      data.addColumn('number', '$TOPOLOGY1');
+      data.addColumn('number', '$TOPOLOGY2');
+
+      data.addRows([
+END_END
+
+# the actual simulations, and capturing of the statistics, are done here:
+    run_simulation $TOPOLOGY1 > tmp-results1
+    run_simulation $TOPOLOGY2 > tmp-results2
+    join tmp-results1 tmp-results2 | sed -e 's/ /, /g' -e 's/.*/        [&],/'
+    rm -f tmp-results1 tmp-results2
+
+cat << END_END
+      ]);
+      chart.draw(data, options);
+    }
+  </script>
+</head>
+
+<body>
+  <div id='linechart_material'></div>
+</body>
+</html>
+END_END
+}
+
+
+rm -f $HTML
+build_html > $HTML
+echo "output is in $HTML"

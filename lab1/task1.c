@@ -1,37 +1,22 @@
-#include <fcntl.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <byteswap.h>
 #include <string.h>
 
-#define FILESIZ 10000
-
-int main(int argc, char *argv[])
+void main (int argc, char* argv[])
 {
-	//FILE *fp = fopen("textfile.txt","r");
-	FILE* fp = fopen(argv[1], "r");
 
-	char buffer[50];
+  FILE* fp = fopen("Q1.datafile", "rb");
+  unsigned int buffer;
+  char binary[4];
+  int i = 1;
 
-	while(fgets(buffer,sizeof buffer,fp) != NULL)
-	{
-		printf("%s", buffer);
-
-		//print every second word......
-		char* token = strtok(buffer, " ");
-		int i = 1;
-		printf("Printing every 2nd word...\n");
-		while(token != NULL)
-		{
-			if (i % 2 == 0)
-			{
-				printf("%s ", token);
-			}
-			i++;
-			token = strtok(NULL, " ");
-		}
-	}
-
-	fclose(fp);
+  while (!feof(fp))
+  {
+    fread(&buffer, 4, 1, fp);
+    printf("line %i || swaped: %d | og: %d | og hex: %.2X\n", i, bswap_32(buffer), buffer, buffer);
+    i++;
+  }
+  printf("\n");
 
 }

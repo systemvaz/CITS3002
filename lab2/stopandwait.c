@@ -165,5 +165,7 @@ EVENT_HANDLER(reboot_node)
 
     CHECK(CNET_set_debug_string( EV_DEBUG0, "State"));
 
-    CNET_enable_application(ALLNODES);
+    if(nodeinfo.nodenumber == 0) {
+	CNET_enable_application(ALLNODES);
+    }
 }
