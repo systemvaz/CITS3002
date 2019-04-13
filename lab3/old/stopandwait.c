@@ -21,8 +21,7 @@
     network of 2 nodes.
  */
 
-typedef enum    { DL_DATA }   FRAMEKIND;
-// typedef enum    { DL_DATA, DL_ACK }   FRAMEKIND;
+typedef enum    { DL_DATA, DL_ACK }   FRAMEKIND;
 
 typedef struct {
     char        data[MAX_MESSAGE_SIZE];
@@ -33,9 +32,6 @@ typedef struct {
     size_t	 len;       	// the length of the msg field only
     int          checksum;  	// checksum of the whole frame
     int          seq;       	// only ever 0 or 1
-
-    bool    ack;
-    int     ack_seq;
 
     MSG          msg;
 } FRAME;
@@ -52,9 +48,6 @@ int       	ackexpected		= 0;
 int		nextframetosend		= 0;
 int		frameexpected		= 0;
 
-bool    sendack   = false;
-int     ackseqno  = 0;
-
 
 void transmit_frame(MSG *msg, FRAMEKIND kind, size_t length, int seqno)
 {
@@ -66,30 +59,16 @@ void transmit_frame(MSG *msg, FRAMEKIND kind, size_t length, int seqno)
     f.checksum  = 0;
     f.len       = length;
 
-    // f.ack       = acknowledge;
-    f.ack_seq   = ackseqno;
-
     switch (kind) {
-  //   case DL_ACK :
-  //       printf("ACK transmitted, seq=%d\n", seqno);
-	// break;
+    case DL_ACK :
+        printf("ACK transmitted, seq=%d\n", seqno);
+	break;
 
     case DL_DATA: {
 	CnetTime	timeout;
 
         printf(" DATA transmitted, seq=%d\n", seqno);
         memcpy(&f.msg, msg, (int)length);
-
-        if(sendack == true)
-        {
-          f.ack = true;
-          printf(" Piggybacking ACK with data, ack_seq=%d\n", ackseqno);
-        }
-        else
-        {
-          f.ack = false;
-        }
-
 
 	timeout = FRAME_SIZE(f)*((CnetTime)8000000 / linkinfo[link].bandwidth) +
 				linkinfo[link].propagationdelay;
@@ -101,12 +80,6 @@ void transmit_frame(MSG *msg, FRAMEKIND kind, size_t length, int seqno)
     length      = FRAME_SIZE(f);
     f.checksum  = CNET_ccitt((unsigned char *)&f, (int)length);
     CHECK(CNET_write_physical(link, &f, &length));
-
-    if(sendack == true)
-    {
-      f.ack = true;
-    }
-
 }
 
 EVENT_HANDLER(application_ready)
@@ -133,53 +106,32 @@ EVENT_HANDLER(physical_ready)
 
     checksum    = f.checksum;
     f.checksum  = 0;
-    if(CNET_ccitt((unsigned char *)&f, (int)len) != checksum)
-    {
+    if(CNET_ccitt((unsigned char *)&f, (int)len) != checksum) {
         printf("\t\t\t\tBAD checksum - frame ignored\n");
-
-        sendack = false;
-
         return;           // bad checksum, ignore frame
     }
 
     switch (f.kind) {
-  //   case DL_ACK :
-  //       if(f.seq == ackexpected) {
-  //           printf("\t\t\t\tACK received, seq=%d\n", f.seq);
-  //           CNET_stop_timer(lasttimer);
-  //           ackexpected = 1-ackexpected;
-  //           CNET_enable_application(ALLNODES);
-  //       }
-	// break;
+    case DL_ACK :
+        if(f.seq == ackexpected) {
+            printf("\t\t\t\tACK received, seq=%d\n", f.seq);
+            CNET_stop_timer(lasttimer);
+            ackexpected = 1-ackexpected;
+            CNET_enable_application(ALLNODES);
+        }
+	break;
 
     case DL_DATA :
         printf("\t\t\t\tDATA received, seq=%d, ", f.seq);
         if(f.seq == frameexpected) {
             printf("up to application\n");
             len = f.len;
-
-            ackseqno = frameexpected;
-            sendack = true;
-
             CHECK(CNET_write_application(&f.msg, &len));
             frameexpected = 1-frameexpected;
         }
         else
-        {
             printf("ignored\n");
-        }
-
-        if(f.ack == true)
-        {
-          if(f.ack_seq == ackexpected)
-          {
-            printf("\t\t\t\tACK received via Piggyback, ack_seq=%d\n", f.ack_seq);
-            CNET_stop_timer(lasttimer);
-            ackexpected = 1-ackexpected;
-            CNET_enable_application(ALLNODES);
-          }
-        }
-        //transmit_frame(NULL, DL_ACK, 0, f.seq);
+        transmit_frame(NULL, DL_ACK, 0, f.seq);
 	break;
     }
 }

@@ -1,10 +1,9 @@
 //  THIS TOPOLOGY FILE INTRODUCED (ONLY) FRAME CORRUPTION
 
 compile			= "piggyback.c"
-//compile			= "stopandwait.c"
 
-messagerate             = 200ms,
-        bandwidth               = 10Mbps,
+messagerate             = 1000ms,
+        bandwidth               = 56Kbps,
         propagationdelay        = 2500ms,
 
 //  FRAME CORRUPTION WILL BE INTRODUCED AT THE RATE OF 1:8  (1:2^3)
