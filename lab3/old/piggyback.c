@@ -32,6 +32,7 @@ typedef struct {
     size_t	 len;       	// the length of the msg field only
     int          checksum;  	// checksum of the whole frame
     int          seq;       	// only ever 0 or 1
+    int           piggyback;
 
     MSG          msg;
 } FRAME;
@@ -48,8 +49,11 @@ int       	ackexpected		= 0;
 int		nextframetosend		= 0;
 int		frameexpected		= 0;
 
+bool piggy = false;
+int pkiggyseq = 0;
 
-void transmit_frame(MSG *msg, FRAMEKIND kind, size_t length, int seqno)
+
+void transmit_frame(MSG *msg, FRAMEKIND kind, size_t length, int seqno, int piggy)
 {
     FRAME       f;
     int		link = 1;
@@ -58,6 +62,7 @@ void transmit_frame(MSG *msg, FRAMEKIND kind, size_t length, int seqno)
     f.seq       = seqno;
     f.checksum  = 0;
     f.len       = length;
+    f.piggyback = 0;
 
     switch (kind) {
     case DL_ACK :
@@ -78,6 +83,10 @@ void transmit_frame(MSG *msg, FRAMEKIND kind, size_t length, int seqno)
       }
     }
     length      = FRAME_SIZE(f);
+    if(piggy)
+    {
+      f.piggyback = 1;
+    }
     f.checksum  = CNET_ccitt((unsigned char *)&f, (int)length);
     CHECK(CNET_write_physical(link, &f, &length));
 }
@@ -91,7 +100,7 @@ EVENT_HANDLER(application_ready)
     CNET_disable_application(ALLNODES);
 
     printf("down from application, seq=%d\n", nextframetosend);
-    transmit_frame(lastmsg, DL_DATA, lastlength, nextframetosend);
+    transmit_frame(lastmsg, DL_DATA, lastlength, nextframetosend, 0);
     nextframetosend = 1-nextframetosend;
 }
 
@@ -116,22 +125,38 @@ EVENT_HANDLER(physical_ready)
         if(f.seq == ackexpected) {
             printf("\t\t\t\tACK received, seq=%d\n", f.seq);
             CNET_stop_timer(lasttimer);
+            CNET_stop_timer(piggytimeout);
             ackexpected = 1-ackexpected;
             CNET_enable_application(ALLNODES);
         }
 	break;
 
     case DL_DATA :
+        CnetTime piggytimeout;
         printf("\t\t\t\tDATA received, seq=%d, ", f.seq);
         if(f.seq == frameexpected) {
             printf("up to application\n");
             len = f.len;
             CHECK(CNET_write_application(&f.msg, &len));
             frameexpected = 1-frameexpected;
+            if(f.piggyback == 1)
+            {
+              // CNET_stop_timer(piggytimeout);
+              ackexpected = 1-ackexpected;
+              CNET_enable_application(ALLNODES);
+              printf("piggyback");
+              f.piggyback = 0;
+            }
         }
         else
             printf("ignored\n");
-        transmit_frame(NULL, DL_ACK, 0, f.seq);
+        //transmit_frame(NULL, DL_ACK, 0, f.seq);
+
+        piggy = true;
+        pkiggyseq = f.seq;
+        piggytimeout = 5000000;
+        lasttimer = CNET_start_timer(EV_TIMER2, 3 * piggytimeout, 0);
+
 	break;
     }
 }
@@ -139,7 +164,13 @@ EVENT_HANDLER(physical_ready)
 EVENT_HANDLER(timeouts)
 {
     printf("timeout, seq=%d\n", ackexpected);
-    transmit_frame(lastmsg, DL_DATA, lastlength, ackexpected);
+    transmit_frame(lastmsg, DL_DATA, lastlength, ackexpected, 0);
+}
+
+EVENT_HANDLER(piggybacktimer)
+{
+  printf("piggy timeout, seq=%d\n", ackexpected);
+  transmit_frame(NULL, DL_ACK, 0, pkiggyseq, 1);;
 }
 
 EVENT_HANDLER(showstate)
@@ -162,6 +193,7 @@ EVENT_HANDLER(reboot_node)
     CHECK(CNET_set_handler( EV_PHYSICALREADY,    physical_ready, 0));
     CHECK(CNET_set_handler( EV_TIMER1,           timeouts, 0));
     CHECK(CNET_set_handler( EV_DEBUG0,           showstate, 0));
+    CHECK(CNET_set_handler( EV_TIMER2,           piggybacktimer, 0));
 
     CHECK(CNET_set_debug_string( EV_DEBUG0, "State"));
 

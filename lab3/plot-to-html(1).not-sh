@@ -2,7 +2,7 @@
 
 # location of the cnet simulator
 case `uname` in
-  Linux)        CNET="/usr/bin/cnet"
+  Linux)        CNET="/cslinux/bin/cnet-linux"
                 ;;
 
   Darwin)       export CNETPATH=".:/Volumes/cslinux/adhoc/lib/cnet"
@@ -14,15 +14,17 @@ case `uname` in
                 ;;
 esac
 
-# some variables to define our simulation:
-TOPOLOGY="STOPANDWAIT3"
-METRIC="Messages delivered"
-DURATION="7200s"
+# some variables to define our simulations:
+TOPOLOGY1="STOPANDWAIT"
+TOPOLOGY2="PIGGYBACK"
+
+METRIC="Frames transmitted"
+DURATION="3600s"
 EVERY="10"
 
 # some variables to define our output plot:
 HTML="plot.html"
-TITLE="Number of messages delivered"
+TITLE="Frames transmitted"
 XAXIS="seconds"
 
 
@@ -34,8 +36,14 @@ then
     exit 1
 fi
 
-function build_html   {
+function run_simulation {
+    $CNET -W -q -T -e $DURATION -s -f ${EVERY}secs $1		| \
+    grep "$METRIC"						| \
+    cut -d: -f 2						| \
+    awk "{ printf(\"%d %s\n\", ++i * $EVERY, \$1); }"
+}
 
+function build_html {
     cat << END_END
 <html>
 <head>
@@ -59,16 +67,17 @@ function build_html   {
       var data = new google.visualization.DataTable();
 
       data.addColumn('number', 'seconds');
-      data.addColumn('number', '$TOPOLOGY');
+      data.addColumn('number', '$TOPOLOGY1');
+      data.addColumn('number', '$TOPOLOGY2');
 
       data.addRows([
 END_END
 
-# the actual simulation, and capturing of the statistics, are done here:
-    $CNET -W -q -T -e $DURATION -s -f ${EVERY}secs $TOPOLOGY	| \
-    grep "$METRIC"						| \
-    cut -d: -f 2						| \
-    awk "{ printf(\"        [%d, %s],\n\", ++i * $EVERY, \$1); }"
+# the actual simulations, and capturing of the statistics, are done here:
+    run_simulation $TOPOLOGY1 > tmp-results1
+    run_simulation $TOPOLOGY2 > tmp-results2
+    join tmp-results1 tmp-results2 | sed -e 's/ /, /g' -e 's/.*/        [&],/'
+    rm -f tmp-results1 tmp-results2
 
 cat << END_END
       ]);
@@ -81,8 +90,8 @@ cat << END_END
   <div id='linechart_material'></div>
 </body>
 </html>
-END_END}
-
+END_END
+}
 
 
 rm -f $HTML

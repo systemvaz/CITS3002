@@ -29,9 +29,12 @@ typedef struct {
 
 typedef struct {
     FRAMEKIND    kind;      	// only ever DL_DATA or DL_ACK
-    size_t	 len;       	// the length of the msg field only
+    size_t	     len;       	// the length of the msg field only
     int          checksum;  	// checksum of the whole frame
     int          seq;       	// only ever 0 or 1
+
+    bool         ack;
+    int          ack_seq;
 
     MSG          msg;
 } FRAME;
@@ -43,10 +46,14 @@ typedef struct {
 MSG       	*lastmsg;
 size_t		lastlength		= 0;
 CnetTimerID	lasttimer		= NULLTIMER;
+CnetTimerID piggytimer  = NULLTIMER;
 
 int       	ackexpected		= 0;
 int		nextframetosend		= 0;
 int		frameexpected		= 0;
+
+bool    sendack   = false;
+int     ack_seqno = 0;
 
 
 void transmit_frame(MSG *msg, FRAMEKIND kind, size_t length, int seqno)
@@ -61,14 +68,28 @@ void transmit_frame(MSG *msg, FRAMEKIND kind, size_t length, int seqno)
 
     switch (kind) {
     case DL_ACK :
-        printf("ACK transmitted, seq=%d\n", seqno);
-	break;
+        sendack = false;
+        printf(" ACK transmitted, seq=%d\n", seqno);
+	  break;
 
     case DL_DATA: {
-	CnetTime	timeout;
+	      CnetTime	timeout;
 
         printf(" DATA transmitted, seq=%d\n", seqno);
         memcpy(&f.msg, msg, (int)length);
+
+        if(sendack == true)
+        {
+          f.ack = true;
+          CNET_stop_timer(piggytimer);
+          printf(" Piggybacking ACK with data\n");
+          printf(" Stopping piggytimer...\n");
+        }
+        else
+        {
+          f.ack = false;
+        }
+
 
 	timeout = FRAME_SIZE(f)*((CnetTime)8000000 / linkinfo[link].bandwidth) +
 				linkinfo[link].propagationdelay;
@@ -80,6 +101,12 @@ void transmit_frame(MSG *msg, FRAMEKIND kind, size_t length, int seqno)
     length      = FRAME_SIZE(f);
     f.checksum  = CNET_ccitt((unsigned char *)&f, (int)length);
     CHECK(CNET_write_physical(link, &f, &length));
+
+    // if(sendack == true)
+    // {
+    //   f.ack = true;
+    // }
+
 }
 
 EVENT_HANDLER(application_ready)
@@ -98,7 +125,7 @@ EVENT_HANDLER(application_ready)
 EVENT_HANDLER(physical_ready)
 {
     FRAME        f;
-    size_t	 len;
+    size_t	     len;
     int          link, checksum;
 
     len         = sizeof(FRAME);
@@ -106,8 +133,10 @@ EVENT_HANDLER(physical_ready)
 
     checksum    = f.checksum;
     f.checksum  = 0;
-    if(CNET_ccitt((unsigned char *)&f, (int)len) != checksum) {
+    if(CNET_ccitt((unsigned char *)&f, (int)len) != checksum)
+    {
         printf("\t\t\t\tBAD checksum - frame ignored\n");
+        sendack = false;
         return;           // bad checksum, ignore frame
     }
 
@@ -119,20 +148,40 @@ EVENT_HANDLER(physical_ready)
             ackexpected = 1-ackexpected;
             CNET_enable_application(ALLNODES);
         }
-	break;
+	  break;
 
     case DL_DATA :
         printf("\t\t\t\tDATA received, seq=%d, ", f.seq);
         if(f.seq == frameexpected) {
             printf("up to application\n");
             len = f.len;
+
+            sendack = true;
+            ack_seqno = f.seq;
+
+            if(f.ack == true)
+            {
+              if(f.ack_seq == ackexpected)
+              {
+                printf("\t\t\t\tACK received via Piggyback\n");
+                CNET_stop_timer(lasttimer);
+                ackexpected = 1-ackexpected;
+                CNET_enable_application(ALLNODES);
+              }
+            }
+
+            printf(" Starting piggytimer...\n");
+            piggytimer = CNET_start_timer(EV_TIMER2, 1000000, 0);
+
             CHECK(CNET_write_application(&f.msg, &len));
             frameexpected = 1-frameexpected;
         }
         else
+        {
             printf("ignored\n");
-        transmit_frame(NULL, DL_ACK, 0, f.seq);
-	break;
+        }
+        //transmit_frame(NULL, DL_ACK, 0, f.seq);
+	 break;
     }
 }
 
@@ -140,6 +189,12 @@ EVENT_HANDLER(timeouts)
 {
     printf("timeout, seq=%d\n", ackexpected);
     transmit_frame(lastmsg, DL_DATA, lastlength, ackexpected);
+}
+
+EVENT_HANDLER(piggy_timeouts)
+{
+  printf(" piggy timeout, sending ACK seq=%d\n", ackexpected);
+  transmit_frame(NULL, DL_ACK, 0, ack_seqno);
 }
 
 EVENT_HANDLER(showstate)
@@ -161,6 +216,7 @@ EVENT_HANDLER(reboot_node)
     CHECK(CNET_set_handler( EV_APPLICATIONREADY, application_ready, 0));
     CHECK(CNET_set_handler( EV_PHYSICALREADY,    physical_ready, 0));
     CHECK(CNET_set_handler( EV_TIMER1,           timeouts, 0));
+    CHECK(CNET_set_handler( EV_TIMER2,           piggy_timeouts, 0));
     CHECK(CNET_set_handler( EV_DEBUG0,           showstate, 0));
 
     CHECK(CNET_set_debug_string( EV_DEBUG0, "State"));
