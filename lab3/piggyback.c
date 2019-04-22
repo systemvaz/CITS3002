@@ -102,10 +102,10 @@ void transmit_frame(MSG *msg, FRAMEKIND kind, size_t length, int seqno)
     f.checksum  = CNET_ccitt((unsigned char *)&f, (int)length);
     CHECK(CNET_write_physical(link, &f, &length));
 
-    if(sendack == true)
-    {
-      f.ack = true;
-    }
+    // if(sendack == true)
+    // {
+    //   f.ack = true;
+    // }
 
 }
 
