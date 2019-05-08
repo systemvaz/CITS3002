@@ -1,0 +1,35 @@
+
+compile		= "etherflood.c"
+icontitle	= "%n"
+
+lansegment LAB {
+    lan-bandwidth = 10Mbps
+}
+
+host PC01 {
+   lan to LAB { nicaddr = 00:90:27:62:58:10 }
+}
+
+host server {
+   lan to LAB { nicaddr = 00:90:27:62:58:84 }
+}
+
+host PC02 {
+   lan to LAB { nicaddr = 00:90:27:62:58:12 }
+}
+
+host PC03 {
+   lan to LAB { nicaddr = 00:90:27:62:58:11 }
+}
+
+host PC04 {
+   lan to LAB { nicaddr = 00:90:27:62:58:13 }
+}
+
+host PC05 {
+   lan to LAB { nicaddr = 00:90:27:62:58:14 }
+}
+
+host PC06 {
+   lan to LAB { nicaddr = 00:90:27:62:58:15 }
+}
