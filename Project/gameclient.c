@@ -26,6 +26,7 @@ int main(int argc, char const *argv[])
     char reply[14];
     char buffer[1024] = {0};
     int lives, players;
+    char player_id[3];
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
