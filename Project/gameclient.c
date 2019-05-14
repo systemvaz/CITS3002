@@ -9,6 +9,8 @@
 #define BUFFER_SIZE 1024
 #define PORT 4444
 
+int true = 1;
+
 // char[14] check_reply(int length);
 // {
 //   i = 0;
@@ -62,9 +64,31 @@ int main(int argc, char const *argv[])
     {
       memset(buffer, 0, sizeof(buffer));
       printf("Waiting for game to start...\n");
-      read(sock, buffer, 14);
-      printf("%s\n", buffer);
+      int u = 1;
+      while(u == 1)
+      {
+        read(sock, buffer, 11);
+        printf("%s\n", buffer);
+        if(strstr(buffer, "START"))
+        {
+          printf("Players %c, Lives: %c\n", buffer[6], buffer[8]);
+          send(sock, "100,MOV,EVEN", strlen("100,MOV,EVEN"), 0);
+          printf("Move sent to server....\n");
+        }
+        else if(strstr(buffer, "ELIM"))
+        {
+          close(sock);
+          return 0;
+        }
+        memset(buffer, 0, sizeof(buffer));
+        read(sock, buffer, 8);
+        printf("Buffer: %s\n", buffer);
+        // scanf("%d", &u);
+        // printf("%d\n", u);
+      }
+
     }
+
     else if(strstr(buffer, "REJECT"))
     {
       printf("Rejected: Too many players on server.\n");
@@ -72,13 +96,6 @@ int main(int argc, char const *argv[])
       return 0;
     }
 
-    if(strstr(buffer, "START"))
-    {
-      printf("Players %c, Lives: %c\n", buffer[6], buffer[8]);
-
-    }
-
-    sleep(10);
-    send(sock, "QUIT", strlen("QUIT"), 0);
+    close(sock);
     return 0;
 }

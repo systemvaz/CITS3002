@@ -9,6 +9,7 @@
 #define BUFFER_SIZE 1024
 #define NUM_PLAYERS 1
 #define NUM_LIVES 3
+#define MAX_CLIENTS 5
 
 int num_joined = 0;
 int game_started = 0;
@@ -16,7 +17,7 @@ int waiting_moves = 0;
 int current_level = 1;
 int player_ID = 0;
 int players_ready = 0;
-int client_socket[max_clients];
+int client_socket[MAX_CLIENTS];
 
 typedef enum {INIT, MOV} client_messages;
 typedef enum {EVEN, ODD, DOUB, CON, NONE} client_moves ;
@@ -30,7 +31,7 @@ struct
   int level;
   client_moves move;
   int move_var;
-  boolean pass;
+  //bool pass;
 } player[NUM_PLAYERS];
 
 struct
@@ -89,20 +90,20 @@ void init_player(int client_fd)
   num_joined++;
 }
 
-int check_player(char buf[])
-{
-  char get_player[3];
-  strcpy(get_player, buf, 3);
-  printf("Checking player authorised to play\n");
-  for(int i = 0; i < player_ID; i++)
-  {
-    if(atoi(get_player) == player[i].id)
-    {
-      return i;
-    }
-  }
-  return 0;
-}
+// int check_player(char buf[])
+// {
+//   char get_player[3];
+//   strcpy(get_player, buf, 3);
+//   printf("Checking player authorised to play\n");
+//   for(int i = 0; i < player_ID; i++)
+//   {
+//     if(atoi(get_player) == player[i].id)
+//     {
+//       return i;
+//     }
+//   }
+//   return 0;
+// }
 
 void parse_message(int client_fd, char buf[])
 {
@@ -116,32 +117,32 @@ void parse_message(int client_fd, char buf[])
     send_message(client_fd, 0, REJECT);
   }
 
-  if(strstr(buf, "MOV") && waiting_moves == 1)
-  {
-    //See if player ID in list of players, return player[] array location
-    int check = check_player(buf);
-    if(check > 0)
-    {
-      if(strstr(buf, "EVEN"))
-      {
-        player[check].move = EVEN;
-      }
-      else if(strstr(buf, "ODD"))
-      {
-        player[check].move = ODD;
-      }
-      else if(strstr(buf, "DOUB"))
-      {
-        player[check].move = DOUB;
-      }
-      else if(strstr(buf, "CON"))
-      {
-        player[check].move = CON;
-        player[check].move_var = atoi(buf[8]);
-      }
-      players_ready++;
-    }
-  }
+  // if(strstr(buf, "MOV") && waiting_moves == 1)
+  // {
+  //   //See if player ID in list of players, return player[] array location
+  //   int check = check_player(buf);
+  //   if(check > 0)
+  //   {
+  //     if(strstr(buf, "EVEN"))
+  //     {
+  //       player[check].move = EVEN;
+  //     }
+  //     else if(strstr(buf, "ODD"))
+  //     {
+  //       player[check].move = ODD;
+  //     }
+  //     else if(strstr(buf, "DOUB"))
+  //     {
+  //       player[check].move = DOUB;
+  //     }
+  //     else if(strstr(buf, "CON"))
+  //     {
+  //       player[check].move = CON;
+  //       player[check].move_var = atoi(buf[8]);
+  //     }
+  //     players_ready++;
+  //   }
+  //}
 }
 
 void kill_user(int id)
@@ -150,103 +151,103 @@ void kill_user(int id)
   {
     if(player[id].fd = client_socket[i])
     {
-      close(client_socket[i])
+      close(client_socket[i]);
       client_socket[i] = 0;
       num_joined--;
     }
   }
 }
 
-void tally_results()
-{
-  for(int i = 0; i < NUM_PLAYERS; i++)
-  {
-    if(player[i].pass == true)
-    {
-      player[i].level++;
-      send_message(player[i].fd, player[i].id, PASS)
-    }
-    else if(player[i].pass == false)
-    {
-      player[i].lives--
-      if(player[i].lives == 0)
-      {
-        send_message(player[i].fd, player[i].id, ELIM)
-        kill_user(i);
-      }
-      else
-      {
-        player[i].level++;
-        send_message(player[i].fd, player[i].id, FAIL)
-      }
-    }
-  }
+// void tally_results()
+// {
+//   for(int i = 0; i < NUM_PLAYERS; i++)
+//   {
+//     if(player[i].pass == true)
+//     {
+//       player[i].level++;
+//       send_message(player[i].fd, player[i].id, PASS);
+//     }
+//     else if(player[i].pass == false)
+//     {
+//       player[i].lives--
+//       if(player[i].lives == 0)
+//       {
+//         send_message(player[i].fd, player[i].id, ELIM);
+//         kill_user(i);
+//       }
+//       else
+//       {
+//         player[i].level++;
+//         send_message(player[i].fd, player[i].id, FAIL);
+//       }
+//     }
+//   }
+//
+//   //Add check here for remaining players,
+//   //send VICT if only one left and kill the game
+// }
 
-  //Add check here for remaining players,
-  //send VICT if only one left and kill the game
-}
-
-void play_game_round()
-{
-  //Check result for each players_ready
-  int sum = dice.first + dice.second;
-  client_moves evenodd;
-  boolen doubles;
-  if(sum % 2 == 0)
-  {
-    evenodd = EVEN;
-  }
-  else
-  {
-    evenodd = ODD;
-  }
-  if(dice.first == dice.second)
-  {
-    doubles = true;
-  }
-  else
-  {
-    doubles = false;
-  }
-
-  for(int i; i < NUM_PLAYERS; i++)
-  {
-    if(player[i].moves == EVEN || player[i].moves == ODD)
-    {
-      if(player[i].moves != evenodd)
-      {
-        player[i].pass = false;
-      }
-      else
-      {
-        player[i].pass = true;
-      }
-    }
-    else if(player[i].moves == DOUB)
-    {
-      if(doubles == true)
-      {
-        player[i].pass = true
-      }
-      else
-      {
-        player[i].pass = false;
-      }
-    }
-    else if(player[i].moves == CON)
-    {
-      if(player[i].move_var == dice.first || player[i].move_var == dice.second)
-      {
-        player[i].pass = true;
-      }
-      else
-      {
-        player[i].pass false;
-      }
-    }
-  }
-  tally_results();
-}
+// void play_game_round()
+// {
+//   //Check result for each players_ready
+//   int sum = dice.first + dice.second;
+//   client_moves evenodd;
+//   boolen doubles;
+//   if(sum % 2 == 0)
+//   {
+//     evenodd = EVEN;
+//   }
+//   else
+//   {
+//     evenodd = ODD;
+//   }
+//   if(dice.first == dice.second)
+//   {
+//     doubles = true;
+//   }
+//   else
+//   {
+//     doubles = false;
+//   }
+//
+//   for(int i; i < NUM_PLAYERS; i++)
+//   {
+//     if(player[i].moves == EVEN || player[i].moves == ODD)
+//     {
+//       if(player[i].moves != evenodd)
+//       {
+//         player[i].pass = false;
+//       }
+//       else
+//       {
+//         player[i].pass = true;
+//       }
+//     }
+//     else if(player[i].moves == DOUB)
+//     {
+//       if(doubles == true)
+//       {
+//         player[i].pass = true
+//       }
+//       else
+//       {
+//         player[i].pass = false;
+//       }
+//     }
+//     else if(player[i].moves == CON)
+//     {
+//       if(player[i].move_var == dice.first || player[i].move_var == dice.second)
+//       {
+//         player[i].pass = true;
+//       }
+//       else
+//       {
+//         player[i].pass false;
+//       }
+//     }
+//   }
+//   tally_results();
+// }
 
 void setup_game()
 {
@@ -273,7 +274,6 @@ void kill_game()
  {
    int port = 4444;
    int true = 1;
-   int max_clients = 5;
    int server_fd, client_fd, err, opt_val;
    int max_sd, activity, new_socket, valread;
    struct sockaddr_in server;
@@ -314,7 +314,7 @@ void kill_game()
    printf("Server is listening on %d\n", port);
 
    //Initialise all client sockets
-   for(int i = 0; i < max_clients; i++)
+   for(int i = 0; i < MAX_CLIENTS; i++)
    {
      client_socket[i] = 0;
    }
@@ -328,7 +328,7 @@ void kill_game()
      FD_SET(server_fd, &readfds);
      max_sd = server_fd;
 
-     for(int i = 0; i < max_clients; i++)
+     for(int i = 0; i < MAX_CLIENTS; i++)
      {
        if(client_socket[i] > 0)
        {
@@ -340,7 +340,7 @@ void kill_game()
        }
      }
 
-     activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
+     activity = select(max_sd + 1, &readfds, NULL, NULL, 1000);
 
      if(FD_ISSET(server_fd, &readfds))
      {
@@ -348,7 +348,7 @@ void kill_game()
        printf("New connection, socket fd is %d, port: %d\n",
               new_socket, ntohs(server.sin_port));
 
-       for(int i = 0; i < max_clients; i++)
+       for(int i = 0; i < MAX_CLIENTS; i++)
        {
          if(client_socket[i] == 0)
          {
@@ -359,7 +359,7 @@ void kill_game()
        }
      }
 
-     for(int i = 0; i < max_clients; i++)
+     for(int i = 0; i < MAX_CLIENTS; i++)
      {
        if(FD_ISSET(client_socket[i], &readfds))
        {
@@ -384,10 +384,10 @@ void kill_game()
        setup_game();
      }
 
-     if(game_started == 1 && players_ready == NUM_PLAYERS))
-     {
-       play_game_round();
-     }
+     // if(game_started == 1 && players_ready == NUM_PLAYERS))
+     // {
+     //   play_game_round();
+     // }
 
      free(buf);
    }
