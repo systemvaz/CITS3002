@@ -15,6 +15,25 @@ int setup_game()
   return 1;
 }
 
+void check_victory()
+{
+  printf("Checking victory. numjoined: %d\n", num_joined);
+  if(num_joined == 1)
+  {
+    printf("Victory detected. Finding victor....\n");
+    for(int i = 0; i < NUM_PLAYERS; i++)
+    {
+      printf("Active player: %d\n", players.id[i]);
+      if(players.id[i] != 0)
+      {
+        printf("Sending VICT to user: %d\n", players.id[i]);
+        send_message(i, VICT);
+        kill_user(i);
+      }
+    }
+  }
+}
+
 void tally_results()
 {
   printf("tally_results()....\n");

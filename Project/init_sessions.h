@@ -54,5 +54,19 @@ void kill_user(int i)
   printf("Killing user %d\n", players.fd[i]);
   close(players.fd[i]);
   players.fd[i] = 0;
+  players.id[i] = 0;
+  players.level[i] = 0;
   num_joined--;
 }
+
+// void check_alives()
+// {
+//   for(int i = 0; i < MAX_CLIENTS; i++)
+//   {
+//     if(recv(players.fd[i], void *buf, size_t len, 0 == 0)
+//     {
+//       printf("Client %d not available. Killing\n", players.fd[i]);
+//       kill_user(i);
+//     }
+//   }
+// }

@@ -5,14 +5,14 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <time.h>
 
 #define BUFFER_SIZE 1024
 #define PORT 4444
 
+typedef enum {EVEN, ODD, DOUB, CON, NONE} client_moves ;
+
 int true = 1;
-char move[10];
-char player_id[4];
-char packet[11];
 
 // char[14] check_reply(int length);
 // {
@@ -30,8 +30,12 @@ int main(int argc, char const *argv[])
     struct sockaddr_in serv_addr;
     char reply[14];
     char buffer[1024] = {0};
-    int lives, players;
-    char player_id[3];
+    int lives, players, random;
+    char player_id[4];
+    char packet[15];
+    char move[5];
+    char convar[2];
+    int selection;
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
@@ -65,27 +69,67 @@ int main(int argc, char const *argv[])
     printf("%s\n", buffer);
     if(strstr(buffer, "WELCOME"))
     {
-      // memset(player_id, 0, sizeof(player_id));
-      // strcat(player_id, buffer + 8);
+      memset(player_id, 0, sizeof(player_id));
+      strcat(player_id, buffer + 8);
       memset(buffer, 0, sizeof(buffer));
       printf("Waiting for game to start...\n");
       int u = 1;
-      while(true)
+      while(u == 1)
       {
+        memset(packet, 0, sizeof packet);
+        memset(move, 0, sizeof move);
         read(sock, buffer, 11);
         printf("%s\n", buffer);
-        // memset(move, 0, sizeof(move));
-        memset(packet, 0, sizeof(packet));
         if(strstr(buffer, "START"))
         {
           printf("Players %c, Lives: %c\n", buffer[6], buffer[8]);
-          scanf("%s", packet);
-          // strcat(packet, player_id);
-          // strcat(packet, move);
+          time_t t;
+          //srand((unsigned) time(&t));
+          //random = (rand() % 4)+1;
+          //printf("rand: %d\n", random);
+          printf("1:EVEN 2:ODD 3:DOUB 4:CON\n");
+          scanf("%d", &selection);
+          switch(selection)
+          {
+            case 1:
+              strcpy(move, "EVEN");
+              break;
+            case 2:
+              strcpy(move, "ODD");
+              break;
+            case 3:
+              strcpy(move, "DOUB");
+              break;
+            case 4:
+              strcpy(move, "CON");
+              time_t t;
+              srand((unsigned) time(&t));
+              sprintf(convar, "%d", (rand() % 6)+1);
+              break;
+          }
+          if(strstr(move, "CON"))
+          {
+            strcat(packet, player_id);
+            strcat(packet, ",MOV,");
+            strcat(packet, move);
+            strcat(packet, ",");
+            strcat(packet, convar);
+          }
+          else
+          {
+            strcat(packet, player_id);
+            strcat(packet, ",MOV,");
+            strcat(packet, move);
+          }
+
+          //scanf("%s", packet);
+          printf("Packet about to send: %s\n", packet);
+          // scanf("%d", &u);
           send(sock, packet, strlen(packet), 0);
+          // send(sock, "100,EVEN", strlen("100,EVEN"), 0);
           printf("Move sent to server....\n");
         }
-        else if(strstr(buffer, "ELIM"))
+        else if(strstr(buffer, "ELIM") || strstr(buffer, "VICT"))
         {
           close(sock);
           return 0;

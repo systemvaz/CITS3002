@@ -43,6 +43,8 @@ int main(int argc, char *argv[])
 
     //Check for new connections - init_sessions.h
     listen_connections(server_fd, server, client, mytimeout);
+    //Check active connections still connected - init_sessions.h
+    //check_alives();
 
     for(int i = 0; i < MAX_CLIENTS; i++)
     {
@@ -66,6 +68,7 @@ int main(int argc, char *argv[])
     {
       play_round();
       tally_results();
+      check_victory();
       game_started = 0;
       players_ready = 0;
     }

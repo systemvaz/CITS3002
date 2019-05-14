@@ -122,12 +122,12 @@ int main(int argc, char const *argv[])
 
           //scanf("%s", packet);
           printf("Packet about to send: %s\n", packet);
-          scanf("%d", &u);
+          // scanf("%d", &u);
           send(sock, packet, strlen(packet), 0);
           // send(sock, "100,EVEN", strlen("100,EVEN"), 0);
           printf("Move sent to server....\n");
         }
-        else if(strstr(buffer, "ELIM"))
+        else if(strstr(buffer, "ELIM") || strstr(buffer, "VICT"))
         {
           close(sock);
           return 0;

@@ -1,6 +1,6 @@
 static int const BUFFER_SIZE = 1024;
 static int const PORT = 4444;
-static int const NUM_PLAYERS = 1;
+static int const NUM_PLAYERS = 2;
 static int const MAX_CLIENTS = 5;
 static int const NUM_LIVES = 3;
 
