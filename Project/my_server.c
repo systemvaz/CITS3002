@@ -340,7 +340,7 @@ void kill_game()
        }
      }
 
-     activity = select(max_sd + 1, &readfds, NULL, NULL, 1000);
+     activity = select(max_sd + 1, &readfds, NULL, NULL, NULL);
 
      if(FD_ISSET(server_fd, &readfds))
      {

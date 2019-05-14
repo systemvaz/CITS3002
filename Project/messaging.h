@@ -53,6 +53,7 @@ void parse_message(int i, char buffer[])
   {
     printf("Rejecting connection %d, too many players\n", players.fd[i]);
     send_message(i, REJECT);
+    kill_user(i);
   }
 
   if(strstr(buffer, "MOV") && players_ready != NUM_PLAYERS)
@@ -81,17 +82,7 @@ void parse_message(int i, char buffer[])
 
 void check_message(int i, char buffer[])
 {
-  if(strcmp("QUIT", buffer) == 0)
-  {
-    close(players.fd[i]);
-    printf("Client %d connection closed\n", players.fd[i]);
-    num_joined--;
-    players.fd[i] = 0;
-  }
-  else
-  {
-    printf("check_message()\n");
-    printf("client %d --> %s\n", players.fd[i], buffer);
-    parse_message(i, buffer);
-  }
+  // printf("check_message()\n");
+  printf("client %d --> %s\n", players.fd[i], buffer);
+  parse_message(i, buffer);
 }

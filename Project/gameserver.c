@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
   struct sockaddr client;
   struct timeval mytimeout;
 
-  mytimeout.tv_usec = 1000;
+  mytimeout.tv_usec = 200;
 
   //Setup server - init_server.h
   server_fd = create_socket(PORT);
@@ -48,17 +48,17 @@ int main(int argc, char *argv[])
     {
       if(FD_ISSET(players.fd[i], &readfds))
       {
-        printf("trying to get user input\n");
+        // printf("trying to get user input\n");
         read(players.fd[i], buffer, BUFFER_SIZE);
         check_message(i, buffer);
       }
     }
 
-    printf("check\n");
+    // printf("check\n");
     if(num_joined == NUM_PLAYERS && game_started == 0)
     {
       players_ready = 0;
-      printf("Setting up game\n");
+      // printf("Setting up game\n");
       game_started = setup_game();
     }
 
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
       players_ready = 0;
     }
 
-    printf("end of while loop\n");
+    // printf("end of while loop\n");
     free(buffer);
   }
 

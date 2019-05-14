@@ -8,28 +8,28 @@ void initialise_clientfd()
 
 void listen_connections(int server_fd, struct sockaddr_in server, struct sockaddr client, struct timeval mytimeout)
 {
-  printf("listen_conntections()\n");
+  // printf("listen_conntections()\n");
   socklen_t client_len = sizeof(client);
   max_sd = server_fd;
 
   for(int i = 0; i < MAX_CLIENTS; i++)
   {
-    printf("%d\n", i);
+    // printf("%d\n", i);
     if(players.fd[i] > 0)
     {
-      printf("FD_SET\n");
+      // printf("FD_SET\n");
       FD_SET(players.fd[i], &readfds);
     }
     if(players.fd[i] > max_sd)
     {
-      printf("max_sd\n");
+      // printf("max_sd\n");
       max_sd = players.fd[i];
     }
   }
 
-  printf("before: activity select statement\n");
+  // printf("before: activity select statement\n");
   activity = select(max_sd + 1, &readfds, NULL, NULL, &mytimeout);
-  printf("finished: listen_connections()\n");
+  // printf("finished: listen_connections()\n");
 
   if(FD_ISSET(server_fd, &readfds))
   {
