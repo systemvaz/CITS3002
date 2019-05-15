@@ -6,10 +6,8 @@ int setup_game()
   }
   time_t t;
   srand((unsigned) time(&t));
-  // gamedice.first = rand() % 7 + 1;
-  // gamedice.second = rand() % 7 + 1;
-  gamedice.first = 2;
-  gamedice.second = 1;
+  gamedice.first = rand() % 7 + 1;
+  gamedice.second = rand() % 7 + 1;
   printf("Dice1: %d, Dice2: %d\n", gamedice.first, gamedice.second);
   printf("Waiting for moves from players....\n");
   return 1;
@@ -29,6 +27,7 @@ void check_victory()
         printf("Sending VICT to user: %d\n", players.id[i]);
         send_message(i, VICT);
         kill_user(i);
+        num_elim = 0;
       }
     }
   }

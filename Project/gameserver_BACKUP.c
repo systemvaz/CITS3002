@@ -44,25 +44,27 @@ int main(int argc, char *argv[])
     //Check for new connections - init_sessions.h
     listen_connections(server_fd, server, client, mytimeout);
     //Check active connections still connected - init_sessions.h
-    check_alives();
+    //check_alives();
 
     for(int i = 0; i < MAX_CLIENTS; i++)
     {
       if(FD_ISSET(players.fd[i], &readfds))
       {
+        // printf("trying to get user input\n");
         read(players.fd[i], buffer, BUFFER_SIZE);
         check_message(i, buffer);
       }
     }
 
-    if(num_joined == (NUM_PLAYERS - num_elim) && game_started == 0)
+    // printf("check\n");
+    if(num_joined == NUM_PLAYERS && game_started == 0)
     {
       players_ready = 0;
+      // printf("Setting up game\n");
       game_started = setup_game();
     }
 
-    // if(game_started == 1 && players_ready == NUM_PLAYERS)
-    if(game_started == 1 && players_ready == (NUM_PLAYERS - num_elim))
+    if(game_started == 1 && players_ready == NUM_PLAYERS)
     {
       play_round();
       tally_results();
@@ -71,6 +73,7 @@ int main(int argc, char *argv[])
       players_ready = 0;
     }
 
+    // printf("end of while loop\n");
     free(buffer);
   }
 

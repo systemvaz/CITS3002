@@ -82,7 +82,6 @@ void parse_message(int i, char buffer[])
 
 void check_message(int i, char buffer[])
 {
-  // printf("check_message()\n");
   printf("client %d --> %s\n", players.fd[i], buffer);
   parse_message(i, buffer);
 }

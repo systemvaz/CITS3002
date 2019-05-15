@@ -1,6 +1,6 @@
 static int const BUFFER_SIZE = 1024;
 static int const PORT = 4444;
-static int const NUM_PLAYERS = 2;
+static int const NUM_PLAYERS = 4;
 static int const MAX_CLIENTS = 5;
 static int const NUM_LIVES = 3;
 
@@ -28,4 +28,4 @@ typedef struct dice
 clients players;
 dice gamedice;
 fd_set readfds;
-int num_joined, players_ready, max_sd, activity;
+int num_joined, players_ready, max_sd, activity, num_elim;
