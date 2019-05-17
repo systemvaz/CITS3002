@@ -55,14 +55,21 @@ int main(int argc, char *argv[])
       }
     }
 
+    //If enough players joined setup game and send START packets
     if(num_joined == (NUM_PLAYERS - num_elim) && game_started == 0)
     {
       players_ready = 0;
       game_started = setup_game();
     }
 
-    // if(game_started == 1 && players_ready == NUM_PLAYERS)
-    if(game_started == 1 && players_ready == (NUM_PLAYERS - num_elim))
+    //If game started, we are awaiting moves. Check for 30sec timeouts
+    if(game_started == 1)
+    {
+      check_timeouts();
+    }
+
+    //If all moves made, play the game and send results.
+    if(players_ready == (NUM_PLAYERS - num_elim) && game_started == 1)
     {
       play_round();
       tally_results();

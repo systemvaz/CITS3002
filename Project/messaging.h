@@ -56,7 +56,7 @@ void parse_message(int i, char buffer[])
     kill_user(i);
   }
 
-  if(strstr(buffer, "MOV") && players_ready != NUM_PLAYERS)
+  if(strstr(buffer, "MOV") && players_ready != NUM_PLAYERS && players.timed_out[i] != 1)
   {
     if(strstr(buffer, "EVEN"))
     {

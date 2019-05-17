@@ -16,6 +16,8 @@ typedef struct clients
   int level[5];
   client_moves move[5];
   int move_var[5];
+  time_t move_time[5];
+  int timed_out[5];
   int pass[5];
 } clients;
 

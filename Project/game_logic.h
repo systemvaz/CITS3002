@@ -2,7 +2,13 @@ int setup_game()
 {
   for(int i = 0; i < NUM_PLAYERS; i++)
   {
-    send_message(i, START);
+    if(players.id[i] != 0)
+    {
+      players.move_time[i] = time(NULL);
+      players.move[i] = NONE;
+      players.move_var[i] = 0;
+      send_message(i, START);
+    }
   }
   time_t t;
   srand((unsigned) time(&t));
@@ -11,6 +17,21 @@ int setup_game()
   printf("Dice1: %d, Dice2: %d\n", gamedice.first, gamedice.second);
   printf("Waiting for moves from players....\n");
   return 1;
+}
+
+void check_timeouts()
+{
+  for(int i = 0; i < NUM_PLAYERS; i++)
+  if(players.id[i] != 0 && players.move[i] == NONE)
+  {
+    if(difftime(time(NULL), players.move_time[i]) >= 30)
+    {
+      //Player has timed out on making moves. User will get a FAIL packet after round
+      printf("Player %d has timed out on making a move\n", players.id[i]);
+      players.timed_out[i] = 1;
+      players_ready++;
+    }
+  }
 }
 
 void check_victory()
@@ -31,6 +52,12 @@ void check_victory()
       }
     }
   }
+  else if(num_joined < 1)
+  {
+    //All players lost. Reset.
+    printf("All players eliminated, resetting....\n");
+    num_elim = 0;
+  }
 }
 
 void tally_results()
@@ -38,25 +65,30 @@ void tally_results()
   printf("tally_results()....\n");
   for(int i = 0; i < NUM_PLAYERS; i++)
   {
-    if(players.pass[i] == 1)
+    if(players.id[i] != 0)
     {
-      players.level[i]++;
-      send_message(i, PASS);
-    }
-    else if(players.pass[i] == 0)
-    {
-      players.lives[i]--;
-      if(players.lives[i] == 0)
-      {
-        send_message(i, ELIM);
-        kill_user(i);
-      }
-      else
+      if(players.pass[i] == 1)
       {
         players.level[i]++;
-        send_message(i, FAIL);
+        send_message(i, PASS);
+      }
+      else if(players.pass[i] == 0)
+      {
+        players.lives[i]--;
+        if(players.lives[i] == 0)
+        {
+          send_message(i, ELIM);
+          kill_user(i);
+        }
+        else
+        {
+          players.level[i]++;
+          send_message(i, FAIL);
+        }
       }
     }
+    //Reset any move timeout flags now that round has finished
+    players.timed_out[i] = 0;
   }
 }
 
@@ -118,6 +150,11 @@ void play_round()
       {
         players.pass[i] = 0;
       }
+    }
+
+    if(players.timed_out[i] == 1)
+    {
+      players.pass[i] = 0;
     }
   }
 }
