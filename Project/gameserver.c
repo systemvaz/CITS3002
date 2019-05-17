@@ -59,6 +59,7 @@ int main(int argc, char *argv[])
     if(num_joined == (NUM_PLAYERS - num_elim) && game_started == 0)
     {
       players_ready = 0;
+      to_lobby = 1;
       game_started = setup_game();
     }
 

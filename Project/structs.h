@@ -18,6 +18,7 @@ typedef struct clients
   int move_var[5];
   time_t move_time[5];
   int timed_out[5];
+  int in_lobby[5];
   int pass[5];
 } clients;
 
@@ -30,4 +31,4 @@ typedef struct dice
 clients players;
 dice gamedice;
 fd_set readfds;
-int num_joined, players_ready, max_sd, activity, num_elim;
+int num_joined, players_ready, max_sd, activity, num_elim, to_lobby;

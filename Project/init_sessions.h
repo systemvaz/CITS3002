@@ -6,6 +6,23 @@ void initialise_clientfd()
   }
 }
 
+void initialise_player(int i)
+{
+  players.id[i] = i + 100;
+  players.lives[i] = NUM_LIVES;
+  players.level[i] = 1;
+  if(to_lobby == 1)
+  {
+    players.in_lobby[i] == 1;
+    printf("Game in session, player %d added to lobby\n", players.if[i]);
+  }
+  else
+  {
+    printf("Player %d initialised\n", players.id[i]);
+    num_joined++;
+  }
+}
+
 void listen_connections(int server_fd, struct sockaddr_in server, struct sockaddr client, struct timeval mytimeout)
 {
   socklen_t client_len = sizeof(client);

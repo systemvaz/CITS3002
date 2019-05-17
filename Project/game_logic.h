@@ -19,6 +19,18 @@ int setup_game()
   return 1;
 }
 
+void check_lobby()
+{
+  for(int i = 0; i < MAX_CLIENTS; i++)
+  {
+    if(players.in_lobby[i] == 1)
+    {
+      players[i].in_lobby[i] = 0;
+      num_players++;
+    }
+  }
+}
+
 void check_timeouts()
 {
   for(int i = 0; i < NUM_PLAYERS; i++)
@@ -49,6 +61,8 @@ void check_victory()
         send_message(i, VICT);
         kill_user(i);
         num_elim = 0;
+        check_lobby();
+        to_lobby = 0;
       }
     }
   }
@@ -57,6 +71,8 @@ void check_victory()
     //All players lost. Reset.
     printf("All players eliminated, resetting....\n");
     num_elim = 0;
+    check_lobby();
+    to_lobby = 0;
   }
 }
 
