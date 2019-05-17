@@ -40,19 +40,21 @@ void send_message(int i, server_messages to_send)
 void parse_message(int i, char buffer[])
 {
   printf("Buffer: %s\n", buffer);
-  if(strcmp("INIT", buffer) == 0 && num_joined <= MAX_CLIENTS)
+  if(strcmp("INIT", buffer) == 0 && num_clients <= MAX_CLIENTS)
   {
+    printf("INIT recieved\n");
     initialise_player(i);
     send_message(i, WELCOME);
   }
-  else if(strcmp("INIT", buffer) == 0 && num_joined > MAX_CLIENTS)
+  else if(strcmp("INIT", buffer) == 0 && num_clients > MAX_CLIENTS)
   {
     printf("Rejecting connection %d, too many connections\n", players.fd[i]);
     send_message(i, REJECT);
     kill_user(i);
   }
 
-  if(strstr(buffer, "MOV") && players_ready != NUM_PLAYERS && players.timed_out[i] != 1)
+  if(strstr(buffer, "MOV") && players_ready != (NUM_PLAYERS - num_elim)
+     && players.timed_out[i] != 1 && players.in_lobby[i] != 1)
   {
     if(strstr(buffer, "EVEN"))
     {

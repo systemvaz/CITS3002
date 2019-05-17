@@ -11,14 +11,15 @@ void initialise_player(int i)
   players.id[i] = i + 100;
   players.lives[i] = NUM_LIVES;
   players.level[i] = 1;
+  printf("Player %d initialised\n", players.id[i]);
+
   if(to_lobby == 1)
   {
-    players.in_lobby[i] == 1;
-    printf("Game in session, player %d added to lobby\n", players.if[i]);
+    players.in_lobby[i] = 1;
+    printf("Game in session, player %d added to lobby\n", players.id[i]);
   }
   else
   {
-    printf("Player %d initialised\n", players.id[i]);
     num_joined++;
   }
 }
@@ -54,6 +55,7 @@ void listen_connections(int server_fd, struct sockaddr_in server, struct sockadd
       {
         printf("Adding client to list of sockets\n");
         players.fd[i] = new_socket;
+        num_clients++;
         break;
       }
     }
@@ -64,14 +66,15 @@ void kill_user(int i)
 {
   printf("Killing user %d\n", players.fd[i]);
   close(players.fd[i]);
+  num_clients--;
   players.fd[i] = 0;
-  if(players.id != 0)
+  if(players.id != 0 && players.in_lobby[i] != 1)
   {
     players.id[i] = 0;
     players.level[i] = 0;
     num_elim++;
+    num_joined--;
   }
-  num_joined--;
 }
 
 void check_alives()

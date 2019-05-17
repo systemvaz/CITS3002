@@ -32,6 +32,8 @@ int main(int argc, char *argv[])
   //Initialise all client sockets to 0 - init_sessions.h;
   initialise_clientfd();
   num_joined = 0;
+  num_clients = 0;
+  to_lobby = 0;
   game_started = 0;
   players_ready = 0;
 
@@ -46,6 +48,7 @@ int main(int argc, char *argv[])
     //Check active connections still connected - init_sessions.h
     check_alives();
 
+    //Read and parse messages from connected clients
     for(int i = 0; i < MAX_CLIENTS; i++)
     {
       if(FD_ISSET(players.fd[i], &readfds))
@@ -75,6 +78,12 @@ int main(int argc, char *argv[])
       play_round();
       tally_results();
       check_victory();
+
+      if(to_lobby == 0)
+      {
+        check_lobby();
+      }
+      
       game_started = 0;
       players_ready = 0;
     }

@@ -1,8 +1,8 @@
 int setup_game()
 {
-  for(int i = 0; i < NUM_PLAYERS; i++)
+  for(int i = 0; i < MAX_CLIENTS; i++)
   {
-    if(players.id[i] != 0)
+    if(players.id[i] != 0 && players.in_lobby[i] != 1)
     {
       players.move_time[i] = time(NULL);
       players.move[i] = NONE;
@@ -25,16 +25,19 @@ void check_lobby()
   {
     if(players.in_lobby[i] == 1)
     {
-      players[i].in_lobby[i] = 0;
-      num_players++;
+      if(num_joined != NUM_PLAYERS)
+      {
+        players.in_lobby[i] = 0;
+        num_joined++;
+      }
     }
   }
 }
 
 void check_timeouts()
 {
-  for(int i = 0; i < NUM_PLAYERS; i++)
-  if(players.id[i] != 0 && players.move[i] == NONE)
+  for(int i = 0; i < MAX_CLIENTS; i++)
+  if(players.id[i] != 0 && players.move[i] == NONE && players.in_lobby[i] != 1)
   {
     if(difftime(time(NULL), players.move_time[i]) >= 30)
     {
@@ -52,16 +55,15 @@ void check_victory()
   if(num_joined == 1)
   {
     printf("Victory detected. Finding victor....\n");
-    for(int i = 0; i < NUM_PLAYERS; i++)
+    for(int i = 0; i < MAX_CLIENTS; i++)
     {
       printf("Active player: %d\n", players.id[i]);
-      if(players.id[i] != 0)
+      if(players.id[i] != 0 && players.in_lobby[i] != 1)
       {
         printf("Sending VICT to user: %d\n", players.id[i]);
         send_message(i, VICT);
         kill_user(i);
         num_elim = 0;
-        check_lobby();
         to_lobby = 0;
       }
     }
@@ -71,7 +73,6 @@ void check_victory()
     //All players lost. Reset.
     printf("All players eliminated, resetting....\n");
     num_elim = 0;
-    check_lobby();
     to_lobby = 0;
   }
 }
@@ -79,9 +80,9 @@ void check_victory()
 void tally_results()
 {
   printf("tally_results()....\n");
-  for(int i = 0; i < NUM_PLAYERS; i++)
+  for(int i = 0; i < MAX_CLIENTS; i++)
   {
-    if(players.id[i] != 0)
+    if(players.id[i] != 0 && players.in_lobby[i] != 1)
     {
       if(players.pass[i] == 1)
       {
@@ -132,45 +133,48 @@ void play_round()
     doubles = 0;
   }
 
-  for(int i = 0; i < NUM_PLAYERS; i++)
+  for(int i = 0; i < MAX_CLIENTS; i++)
   {
-    if(players.move[i] == EVEN || players.move[i] == ODD)
+    if(players.id[i] != 0 && players.in_lobby[i] != 1)
     {
-      if(players.move[i] != evenodd)
+      if(players.move[i] == EVEN || players.move[i] == ODD)
       {
-        players.pass[i] = 0;
+        if(players.move[i] != evenodd)
+        {
+          players.pass[i] = 0;
+        }
+        else
+        {
+          players.pass[i] = 1;
+        }
       }
-      else
+      else if(players.move[i] == DOUB)
       {
-        players.pass[i] = 1;
+        if(doubles == 1)
+        {
+          players.pass[i] = 1;
+        }
+        else
+        {
+          players.pass[i] = 0;
+        }
       }
-    }
-    else if(players.move[i] == DOUB)
-    {
-      if(doubles == 1)
+      else if(players.move[i] == CON)
       {
-        players.pass[i] = 1;
+        if(players.move_var[i] == gamedice.first || players.move_var[i] == gamedice.second)
+        {
+          players.pass[i] = 1;
+        }
+        else
+        {
+          players.pass[i] = 0;
+        }
       }
-      else
-      {
-        players.pass[i] = 0;
-      }
-    }
-    else if(players.move[i] == CON)
-    {
-      if(players.move_var[i] == gamedice.first || players.move_var[i] == gamedice.second)
-      {
-        players.pass[i] = 1;
-      }
-      else
-      {
-        players.pass[i] = 0;
-      }
-    }
 
-    if(players.timed_out[i] == 1)
-    {
-      players.pass[i] = 0;
+      if(players.timed_out[i] == 1)
+      {
+        players.pass[i] = 0;
+      }
     }
   }
 }
