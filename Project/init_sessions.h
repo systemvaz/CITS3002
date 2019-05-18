@@ -80,13 +80,18 @@ void kill_user(int i)
   players.packets[i] = 0;
 
   //If active game player, alter game variables so game logic continues uninterupted
-  if(players.id != 0 && players.in_lobby[i] != 1)
+  if(players.id[i] != 0 && players.in_lobby[i] != 1)
   {
     players.id[i] = 0;
     players.level[i] = 0;
     num_elim++;
     num_joined--;
-    players_ready--;
+    /*If player had submitted move before disconnecting,
+    * alter player_ready variable so game logic continues uninterupted. */
+    if(players.move[i] != NONE)
+    {
+      players_ready--;
+    }
   }
 }
 
