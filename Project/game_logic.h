@@ -1,3 +1,5 @@
+/*Initialise player structure variables for a new game.
+* Then send START packet via: messaging.h */
 int setup_game()
 {
   for(int i = 0; i < MAX_CLIENTS; i++)
@@ -19,6 +21,8 @@ int setup_game()
   return 1;
 }
 
+/*Check lobby for all connected players. Initialise them to player the next game.
+* Set num_joined++ to tell server the player has joined the game */
 void check_lobby()
 {
   for(int i = 0; i < MAX_CLIENTS; i++)
@@ -34,21 +38,30 @@ void check_lobby()
   }
 }
 
+/*For all users in a game who haven't made a move, compare current time to the
+* time move was requested of user. If 30secs then flag user as timing out.
+* Set players_ready++ to allow game logic to continue. */
 void check_timeouts()
 {
   for(int i = 0; i < MAX_CLIENTS; i++)
-  if(players.id[i] != 0 && players.move[i] == NONE && players.in_lobby[i] != 1)
   {
-    if(difftime(time(NULL), players.move_time[i]) >= 30)
+    if(players.id[i] != 0 && players.move[i] == NONE && players.in_lobby[i] != 1)
     {
-      //Player has timed out on making moves. User will get a FAIL packet after round
-      printf("Player %d has timed out on making a move\n", players.id[i]);
-      players.timed_out[i] = 1;
-      players_ready++;
+      if(difftime(time(NULL), players.move_time[i]) >= 30)
+      {
+        //Player has timed out on making moves. User will get a FAIL packet after round
+        printf("Player %d has timed out on making a move\n", players.id[i]);
+        players.timed_out[i] = 1;
+        players_ready++;
+      }
     }
   }
 }
 
+/*called after game round to see if only one player left. If so, we have a
+* victor and VICT packet is sent, via messaging.h, then kill_user via: init_sessions.h
+* When there is a victory or all players eliminated, to_lobby is set to 0 to
+* so new players can join the next game */
 void check_victory()
 {
   printf("Checking victory. numjoined: %d\n", num_joined);
@@ -77,6 +90,8 @@ void check_victory()
   }
 }
 
+/*Game results are tallied, player lives are adjusted accordingly. Kill users
+* that have depleated all their lives. Send appropriate packets via: messaging.h */
 void tally_results()
 {
   printf("tally_results()....\n");
@@ -109,6 +124,9 @@ void tally_results()
   }
 }
 
+/*Player the game. Generate random numbers for each dice. First we process what
+* the rolled numbers mean in terms of even or odd, doubles. Then for each user
+* check to see if their move resulted in a pass or fail. */
 void play_round()
 {
   //Check result for each players_ready

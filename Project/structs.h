@@ -4,7 +4,6 @@ static int const NUM_PLAYERS = 4;
 static int const NUM_LIVES = 3;
 enum {MAX_CLIENTS = 10};
 
-typedef enum {INIT, MOV} client_messages;
 typedef enum {EVEN, ODD, DOUB, CON, NONE} client_moves ;
 typedef enum {WELCOME, START, PASS, FAIL, ELIM, VICT, REJECT, CANCEL} server_messages;
 
@@ -31,4 +30,5 @@ typedef struct dice
 clients players;
 dice gamedice;
 fd_set readfds;
-int num_joined, players_ready, max_sd, activity, num_elim, to_lobby, num_clients;
+int max_sd, activity, num_clients;
+int num_joined, players_ready, num_elim, to_lobby;

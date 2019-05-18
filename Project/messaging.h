@@ -1,3 +1,4 @@
+/*Packet formation to be sent to client. Then sent. */
 void send_message(int i, server_messages to_send)
 {
   char packet[15];
@@ -37,19 +38,26 @@ void send_message(int i, server_messages to_send)
   send(players.fd[i], packet, strlen(packet), 0);
 }
 
+/*Packet from client after passing sanity checks. Perform appropriate actions
+* if new user trying to initialise a connection. If game in process and client
+* is a valid player, interpret move packets and log to player structure. */
 void parse_message(int i, char buffer[])
 {
   printf("Buffer: %s\n", buffer);
   if(strcmp("INIT", buffer) == 0 && num_clients <= MAX_CLIENTS)
   {
     printf("INIT recieved\n");
+    //Setup player variables: init_sessions.h
     initialise_player(i);
+    //Send WELCOME packet: messaging.h
     send_message(i, WELCOME);
   }
   else if(strcmp("INIT", buffer) == 0 && num_clients > MAX_CLIENTS)
   {
     printf("Rejecting connection %d, too many connections\n", players.fd[i]);
+    //Send REJECT packet: messaging.h
     send_message(i, REJECT);
+    //Kill connection: init_sessions.h
     kill_user(i);
   }
 
@@ -78,8 +86,13 @@ void parse_message(int i, char buffer[])
   }
 }
 
+/*Packet recieved from client undergoes sanity and security checks. If OK, sent
+* to parse_message function. */
 void check_message(int i, char buffer[])
 {
   printf("client %d --> %s\n", players.fd[i], buffer);
+
+  //Add packet validation and security checks here
+
   parse_message(i, buffer);
 }

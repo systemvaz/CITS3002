@@ -45,10 +45,11 @@ int main(int argc, char *argv[])
 
     //Check for new connections - init_sessions.h
     listen_connections(server_fd, server, client, mytimeout);
-    //Check active connections still connected - init_sessions.h
+    /*Check active connections still connected.
+    * If not, Kill session: init_sessions.h */
     check_alives();
 
-    //Read and parse messages from connected clients
+    //Read and parse messages from connected clients: messaging.h
     for(int i = 0; i < MAX_CLIENTS; i++)
     {
       if(FD_ISSET(players.fd[i], &readfds))
@@ -58,7 +59,9 @@ int main(int argc, char *argv[])
       }
     }
 
-    //If enough players joined setup game and send START packets
+    /*If enough players joined, setup game and send START packets.
+    * Set lobby flag to 1 so any new connections are placed to wait in the lobby.
+    * game_logic.h */
     if(num_joined == (NUM_PLAYERS - num_elim) && game_started == 0)
     {
       players_ready = 0;
@@ -66,13 +69,16 @@ int main(int argc, char *argv[])
       game_started = setup_game();
     }
 
-    //If game started, we are awaiting moves. Check for 30sec timeouts
+    /*If game started, we are awaiting moves. Check for 30sec timeouts
+    * for each player: game_logic.h */
     if(game_started == 1)
     {
       check_timeouts();
     }
 
-    //If all moves made, play the game and send results.
+    /* If all moves made, play the game, tally the results, check if Victory
+    *  or if all players eliminated. If no more players check the lobby to
+    *  initialise new players for a new round of games: game.logic.h */
     if(players_ready == (NUM_PLAYERS - num_elim) && game_started == 1)
     {
       play_round();
@@ -83,7 +89,7 @@ int main(int argc, char *argv[])
       {
         check_lobby();
       }
-      
+
       game_started = 0;
       players_ready = 0;
     }
