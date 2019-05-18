@@ -14,6 +14,10 @@ void initialise_player(int i)
   players.id[i] = i+1;
   players.lives[i] = NUM_LIVES;
   players.level[i] = 1;
+  players.move[i] = NONE;
+  players.move_var[i] = 0;
+  players.pass[i] = 0;
+  players.packets[i] = 0;
   printf("Player %d initialised\n", players.id[i]);
 
   if(to_lobby == 1)
@@ -24,6 +28,7 @@ void initialise_player(int i)
   else
   {
     num_joined++;
+    players.in_lobby[i] = 0;
   }
 }
 
@@ -82,8 +87,11 @@ void kill_user(int i)
   //If active game player, alter game variables so game logic continues uninterupted
   if(players.id[i] != 0 && players.in_lobby[i] != 1)
   {
+    printf("Player %d removed from game.\n", players.id[i]);
     players.id[i] = 0;
     players.level[i] = 0;
+    players.move_var[i] = 0;
+    players.pass[i] = 0;
     num_elim++;
     num_joined--;
     /*If player had submitted move before disconnecting,
@@ -93,6 +101,10 @@ void kill_user(int i)
       players_ready--;
     }
   }
+
+  players.move[i] = NONE;
+  players.in_lobby[i] = 0;
+  players.id[i] = 0;
 }
 
 /*Initialise a non-blocking recv on all connected clients. If error 0, client
