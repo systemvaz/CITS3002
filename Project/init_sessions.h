@@ -11,7 +11,7 @@ void initialise_clientfd()
 * If a game is already in process, then flag them as waiting in the lobby.*/
 void initialise_player(int i)
 {
-  players.id[i] = i + 100;
+  players.id[i] = i+1;
   players.lives[i] = NUM_LIVES;
   players.level[i] = 1;
   printf("Player %d initialised\n", players.id[i]);
@@ -77,6 +77,7 @@ void kill_user(int i)
   close(players.fd[i]);
   num_clients--;
   players.fd[i] = 0;
+  players.packets[i] = 0;
 
   //If active game player, alter game variables so game logic continues uninterupted
   if(players.id != 0 && players.in_lobby[i] != 1)

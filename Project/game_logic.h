@@ -9,19 +9,15 @@ int setup_game()
       players.move_time[i] = time(NULL);
       players.move[i] = NONE;
       players.move_var[i] = 0;
+      players.packets[i] = 0;
       send_message(i, START);
     }
   }
-  time_t t;
-  srand((unsigned) time(&t));
-  gamedice.first = rand() % 7 + 1;
-  gamedice.second = rand() % 7 + 1;
-  printf("Dice1: %d, Dice2: %d\n", gamedice.first, gamedice.second);
   printf("Waiting for moves from players....\n");
   return 1;
 }
 
-/*Check lobby for all connected players. Initialise them to player the next game.
+/*Check lobby for all connected players. Initialise them to play the next game.
 * Set num_joined++ to tell server the player has joined the game */
 void check_lobby()
 {
@@ -38,9 +34,52 @@ void check_lobby()
   }
 }
 
+/* If game has not started, server will wait for 30 seconds starting from when the
+*  first client connects, for the lobby to fill to the required number of players.
+*  If 30 seconds passess without the required number of players, all users are killed*/
+void lobby_timeout()
+{
+  /*Check how many clients are connected */
+  int player_check = 0;
+  for(int i = 0; i < MAX_CLIENTS; i++)
+  {
+    if(players.fd[i] != 0)
+    {
+      player_check++;
+    }
+  }
+  /*If there is only one player connected and we haven't flaaged for the timer
+  * to start yet, then we do so here. */
+  if(player_check == 1 && lobby_timer == 0)
+  {
+    lobbytime = time(NULL);
+    lobby_timer = 1;
+    printf("Lobby time out clock starting now\n");
+  }
+  /*If the timer has been flagged to start, we check whether 30 seconds has
+  * passed and if so we have timed out, we send a CANCEL packet and kill the users */
+  if(lobby_timer == 1)
+  {
+    if(difftime(time(NULL), lobbytime) > 30)
+    {
+      printf("Not enough players. Lobby has timed out. Killing users\n");
+      lobby_timer = 0;
+      for(int i = 0; i < MAX_CLIENTS; i++)
+      {
+        if(players.fd[i] != 0)
+        {
+          send_message(i, CANCEL);
+          kill_user(i);
+        }
+      }
+    }
+  }
+}
+
 /*For all users in a game who haven't made a move, compare current time to the
 * time move was requested of user. If 30secs then flag user as timing out.
-* Set players_ready++ to allow game logic to continue. */
+* Set players_ready++ to allow game logic to continue. Player will recieve a
+* FAIL packet when player_round and tally_results function are called later.*/
 void check_timeouts()
 {
   for(int i = 0; i < MAX_CLIENTS; i++)
@@ -70,7 +109,6 @@ void check_victory()
     printf("Victory detected. Finding victor....\n");
     for(int i = 0; i < MAX_CLIENTS; i++)
     {
-      printf("Active player: %d\n", players.id[i]);
       if(players.id[i] != 0 && players.in_lobby[i] != 1)
       {
         printf("Sending VICT to user: %d\n", players.id[i]);
@@ -131,6 +169,11 @@ void play_round()
 {
   //Check result for each players_ready
   printf("All player moves received. player_round()....\n");
+  time_t t;
+  srand((unsigned) time(&t));
+  gamedice.first = rand() % 6 + 1;
+  gamedice.second = rand() % 6 + 1;
+  printf("Dice1: %d, Dice2: %d\n", gamedice.first, gamedice.second);
   int sum = gamedice.first + gamedice.second;
   client_moves evenodd;
   int doubles;

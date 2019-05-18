@@ -16,6 +16,7 @@ int main(int argc, char *argv[])
 {
   int true = 1;
   int server_fd;
+  int num_bytes = 0;
   int game_started, waiting_moves;
   char *buffer;
   struct sockaddr_in server;
@@ -29,14 +30,16 @@ int main(int argc, char *argv[])
   server = setops_bind(PORT, server_fd);
   listen_port(PORT, server_fd);
 
-  //Initialise all client sockets to 0 - init_sessions.h;
+  // Initialise all client sockets to 0 - init_sessions.h
   initialise_clientfd();
+  //Initialise game logic variables
   num_joined = 0;
   num_clients = 0;
   to_lobby = 0;
   game_started = 0;
   players_ready = 0;
 
+  //Enter infinite loop
   while(true)
   {
     FD_ZERO(&readfds);
@@ -45,17 +48,18 @@ int main(int argc, char *argv[])
 
     //Check for new connections - init_sessions.h
     listen_connections(server_fd, server, client, mytimeout);
-    /*Check active connections still connected.
-    * If not, Kill session: init_sessions.h */
+    //Check active connections are actually still connected: init_sessions.h
     check_alives();
+    //Check whether lobby has been waiting too long for players to join. game_logic.h *
+    lobby_timeout();
 
     //Read and parse messages from connected clients: messaging.h
     for(int i = 0; i < MAX_CLIENTS; i++)
     {
       if(FD_ISSET(players.fd[i], &readfds))
       {
-        read(players.fd[i], buffer, BUFFER_SIZE);
-        check_message(i, buffer);
+        num_bytes = read(players.fd[i], buffer, BUFFER_SIZE);
+        check_message(i, buffer, num_bytes);
       }
     }
 
@@ -66,6 +70,7 @@ int main(int argc, char *argv[])
     {
       players_ready = 0;
       to_lobby = 1;
+      lobby_timer = 0;
       game_started = setup_game();
     }
 
@@ -84,12 +89,10 @@ int main(int argc, char *argv[])
       play_round();
       tally_results();
       check_victory();
-
       if(to_lobby == 0)
       {
         check_lobby();
       }
-
       game_started = 0;
       players_ready = 0;
     }

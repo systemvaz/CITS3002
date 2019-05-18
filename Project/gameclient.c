@@ -64,7 +64,7 @@ int main(int argc, char const *argv[])
 
     // strcpy(reply, check_reply(4));
 
-    read(sock, buffer, 11);
+    read(sock, buffer, 9);
     printf("%s\n", buffer);
     if(strstr(buffer, "WELCOME"))
     {
@@ -77,7 +77,7 @@ int main(int argc, char const *argv[])
       {
         memset(packet, 0, sizeof packet);
         memset(move, 0, sizeof move);
-        read(sock, buffer, 11);
+        read(sock, buffer, 9);
         printf("%s\n", buffer);
         if(strstr(buffer, "START"))
         {
@@ -127,13 +127,13 @@ int main(int argc, char const *argv[])
           // send(sock, "100,EVEN", strlen("100,EVEN"), 0);
           printf("Move sent to server....\n");
         }
-        else if(strstr(buffer, "ELIM") || strstr(buffer, "VICT"))
+        else if(strstr(buffer, "ELIM") || strstr(buffer, "VICT") || strstr(buffer, "CANCEL"))
         {
           close(sock);
           return 0;
         }
         memset(buffer, 0, sizeof(buffer));
-        read(sock, buffer, 8);
+        read(sock, buffer, 6);
         printf("Buffer: %s\n", buffer);
         // scanf("%d", &u);
         // printf("%d\n", u);

@@ -1,4 +1,4 @@
-static int const BUFFER_SIZE = 1024;
+static int const BUFFER_SIZE = 512;
 static int const PORT = 4444;
 static int const NUM_PLAYERS = 4;
 static int const NUM_LIVES = 3;
@@ -19,6 +19,7 @@ typedef struct clients
   int timed_out[MAX_CLIENTS];
   int in_lobby[MAX_CLIENTS];
   int pass[MAX_CLIENTS];
+  int packets[MAX_CLIENTS];
 } clients;
 
 typedef struct dice
@@ -30,5 +31,6 @@ typedef struct dice
 clients players;
 dice gamedice;
 fd_set readfds;
+time_t lobbytime;
 int max_sd, activity, num_clients;
-int num_joined, players_ready, num_elim, to_lobby;
+int num_joined, players_ready, num_elim, to_lobby, lobby_timer;
