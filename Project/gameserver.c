@@ -14,6 +14,23 @@
 
 int main(int argc, char *argv[])
 {
+  if(argc < 2)
+  {
+    printf("Please supply number of players per game as program argument\n");
+    printf("Usage example: gameserver 4\n");
+    return 0;
+  }
+  if(argc == 2 && atoi(argv[1]) >= 1)
+  {
+    NUM_PLAYERS = atoi(argv[1]);
+  }
+  else
+  {
+    printf("Please supply number of players per game as program argument\n");
+    printf("Usage example: gameserver 4\n");
+    return 0;
+  }
+
   int true = 1;
   int server_fd;
   int num_bytes = 0;

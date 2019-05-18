@@ -1,7 +1,7 @@
 static int const BUFFER_SIZE = 512;
 static int const PORT = 4444;
-static int const NUM_PLAYERS = 4;
 static int const NUM_LIVES = 3;
+int NUM_PLAYERS = 1;
 enum {MAX_CLIENTS = 10};
 
 typedef enum {EVEN, ODD, DOUB, CON, NONE} client_moves ;
