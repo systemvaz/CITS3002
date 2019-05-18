@@ -50,8 +50,6 @@ int main(int argc, char *argv[])
     listen_connections(server_fd, server, client, mytimeout);
     //Check active connections are actually still connected: init_sessions.h
     check_alives();
-    //Check whether lobby has been waiting too long for players to join. game_logic.h *
-    lobby_timeout();
 
     //Read and parse messages from connected clients: messaging.h
     for(int i = 0; i < MAX_CLIENTS; i++)
@@ -80,6 +78,8 @@ int main(int argc, char *argv[])
     {
       check_timeouts();
     }
+    //Check whether lobby has been waiting too long for players to join. game_logic.h *
+    lobby_timeout(game_started);
 
     /* If all moves made, play the game, tally the results, check if Victory
     *  or if all players eliminated. If no more players check the lobby to

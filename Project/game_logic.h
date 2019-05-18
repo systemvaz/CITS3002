@@ -37,20 +37,20 @@ void check_lobby()
 /* If game has not started, server will wait for 30 seconds starting from when the
 *  first client connects, for the lobby to fill to the required number of players.
 *  If 30 seconds passess without the required number of players, all users are killed*/
-void lobby_timeout()
+void lobby_timeout(int game_started)
 {
-  /*Check how many clients are connected */
+  /*Check how many initialised players are connected */
   int player_check = 0;
   for(int i = 0; i < MAX_CLIENTS; i++)
   {
-    if(players.fd[i] != 0)
+    if(players.id[i] != 0)
     {
       player_check++;
     }
   }
   /*If there is only one player connected and we haven't flaaged for the timer
   * to start yet, then we do so here. */
-  if(player_check == 1 && lobby_timer == 0)
+  if(player_check > 0 && lobby_timer == 0 && game_started != 1)
   {
     lobbytime = time(NULL);
     lobby_timer = 1;

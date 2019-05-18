@@ -160,9 +160,15 @@ void check_message(int i, char buffer[], int num_bytes)
   }
 
   /* Finally if packet pass above checks and is no more than character array length 14
-  * (includes null terminated bytes), then pass to parse_message function: messaging.h */
+  * (includes null terminated bytes), then pass to parse_message function: messaging.h
+  * If more than 14 chars in packet, treat it as a buffer overflow attempt*/
   if(num_bytes <= (sizeof(char)*14))
   {
     parse_message(i, buffer);
+  }
+  else
+  {
+    printf("Overflow attempt detected. Killing user: %d\n", players.fd[i]);
+    kill_user(i);
   }
 }
