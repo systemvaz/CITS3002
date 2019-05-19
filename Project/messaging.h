@@ -7,15 +7,15 @@ void send_message(int i, server_messages to_send)
   {
     case WELCOME:
       sprintf(packet, "WELCOME,%d", players.id[i]);
-      printf("WELCOME message sent to client %d\n", players.fd[i]);
+      printf("WELCOME message is being sent to client %d\n", players.fd[i]);
       break;
     case REJECT:
       sprintf(packet, "REJECT");
-      printf("REJECT message sent to client %d\n", players.fd[i]);
+      printf("REJECT message is being sent to client %d\n", players.fd[i]);
       break;
     case START:
       sprintf(packet, "START,%d,%d", num_joined, players.lives[i]);
-      printf("START message sent to client %d, player %d\n", players.fd[i], players.id[i]);
+      printf("START message is being sent to client %d, player %d\n", players.fd[i], players.id[i]);
       break;
     case CANCEL:
       sprintf(packet, "CANCEL");
@@ -43,7 +43,6 @@ void send_message(int i, server_messages to_send)
 * is a valid player, interpret move packets and log to player structure. */
 void parse_message(int i, char buffer[])
 {
-  printf("Buffer: %s\n", buffer);
   if(strcmp("INIT", buffer) == 0 && num_clients <= MAX_CLIENTS)
   {
     printf("INIT recieved\n");
@@ -113,7 +112,7 @@ void check_message(int i, char buffer[], int num_bytes)
   }
 
   /*Anti-cheating and illegal move checks if recieving a MOV packet.
-  * Quite ruthless, kill user on detection of these */
+  * Quite aggressive, kill user on detection of these */
   if(strstr(buffer, "MOV"))
   {
     /*If MOV packet, user supplied player ID number should match that recorded.
@@ -168,7 +167,7 @@ void check_message(int i, char buffer[], int num_bytes)
   }
   else
   {
-    printf("Overflow attempt detected. Killing user: %d\n", players.fd[i]);
+    printf("Buffer overflow attempt detected. Killing user: %d\n", players.fd[i]);
     kill_user(i);
   }
 }

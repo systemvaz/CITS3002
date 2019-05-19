@@ -44,3 +44,21 @@ void listen_port(int port, int server_fd)
   }
   printf("Server is listening on %d\n", port);
 }
+
+void splash_screen()
+{
+  system("clear");
+  printf("               (( _______\n");
+  printf("     _______     /\\O    O\\\n");
+  printf("    /O     /\\   /  \\      \\\n");
+  printf("   /   O  /O \\ / O  \\O____O\\ ))\n");
+  printf("((/_____O/    \\\\    /O     /\n");
+  printf("  \\O    O\\    / \\  /   O  /\n");
+  printf("   \\O    O\\ O/   \\/_____O/\n");
+  printf("    \\O____O\\/ ))  CITS3002  ))\n");
+  printf("  ((\n");
+  printf("Super Dice by Alexander Varano della Vergiliana\n");
+  printf("UWA CITS3002 Computer Networks - Project 2019\n");
+  printf("Student Number: 22268701\n");
+  printf("------------------------------------------------\n");
+}

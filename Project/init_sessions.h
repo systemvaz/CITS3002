@@ -1,7 +1,7 @@
 /*Set all file descriptors to 0 for all possible number of clients.*/
 void initialise_clientfd()
 {
-  for(int i = 0; i < MAX_CLIENTS; i++)
+  for(int i = 0; i <= MAX_CLIENTS; i++)
   {
     players.fd[i] = 0;
   }
@@ -18,6 +18,7 @@ void initialise_player(int i)
   players.move_var[i] = 0;
   players.pass[i] = 0;
   players.packets[i] = 0;
+  players.in_game[i] = 0;
   printf("Player %d initialised\n", players.id[i]);
 
   if(to_lobby == 1)
@@ -40,7 +41,7 @@ void listen_connections(int server_fd, struct sockaddr_in server, struct sockadd
   socklen_t client_len = sizeof(client);
   max_sd = server_fd;
 
-  for(int i = 0; i < MAX_CLIENTS; i++)
+  for(int i = 0; i <= MAX_CLIENTS; i++)
   {
     if(players.fd[i] > 0)
     {
@@ -60,7 +61,7 @@ void listen_connections(int server_fd, struct sockaddr_in server, struct sockadd
     printf("New connection, socket fd is %d, port: %d\n",
            new_socket, ntohs(server.sin_port));
 
-    for(int i = 0; i < MAX_CLIENTS; i++)
+    for(int i = 0; i <= MAX_CLIENTS; i++)
     {
       if(players.fd[i] == 0)
       {
@@ -92,11 +93,14 @@ void kill_user(int i)
     players.level[i] = 0;
     players.move_var[i] = 0;
     players.pass[i] = 0;
-    num_elim++;
+    if(players.in_game[i] == 1)
+    {
+      num_elim++;
+    }
     num_joined--;
     /*If player had submitted move before disconnecting,
     * alter player_ready variable so game logic continues uninterupted. */
-    if(players.move[i] != NONE)
+    if(players.move[i] != NONE && players.in_game[i] == 1)
     {
       players_ready--;
     }
@@ -104,6 +108,7 @@ void kill_user(int i)
 
   players.move[i] = NONE;
   players.in_lobby[i] = 0;
+  players.in_game[i] = 0;
   players.id[i] = 0;
 }
 
@@ -119,7 +124,7 @@ void check_alives()
     {
       if(recv(players.fd[i], tempbuffer, sizeof(tempbuffer), MSG_DONTWAIT) == 0)
       {
-        printf("Client %d not available. Killing\n", players.fd[i]);
+        printf("Client %d lost connection. Killing\n", players.fd[i]);
         kill_user(i);
       }
     }

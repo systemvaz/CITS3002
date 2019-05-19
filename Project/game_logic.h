@@ -10,6 +10,7 @@ int setup_game()
       players.move[i] = NONE;
       players.move_var[i] = 0;
       players.packets[i] = 0;
+      players.in_game[i] = 1;
       send_message(i, START);
     }
   }
@@ -34,12 +35,9 @@ void check_lobby()
   }
 }
 
-/* If game has not started, server will wait for 30 seconds starting from when the
-*  first client connects, for the lobby to fill to the required number of players.
-*  If 30 seconds passess without the required number of players, all users are killed*/
-void lobby_timeout(int game_started)
+/*Simple function to count how many players are connected and return this as int */
+int player_count()
 {
-  /*Check how many initialised players are connected */
   int player_check = 0;
   for(int i = 0; i < MAX_CLIENTS; i++)
   {
@@ -48,6 +46,17 @@ void lobby_timeout(int game_started)
       player_check++;
     }
   }
+  return player_check;
+}
+
+/* If game has not started, server will wait for 30 seconds starting from when the
+*  first client connects, for the lobby to fill to the required number of players.
+*  If 30 seconds passess without the required number of players, all users are
+* sent CANCEL packets and then the connections are killed. */
+void lobby_timeout(int game_started)
+{
+  /*Check how many initialised players are connected */
+  int player_check = player_count();
   /*If there is only one player connected and we haven't flaaged for the timer
   * to start yet, then we do so here. */
   if(player_check > 0 && lobby_timer == 0 && game_started != 1)
@@ -55,6 +64,10 @@ void lobby_timeout(int game_started)
     lobbytime = time(NULL);
     lobby_timer = 1;
     printf("Lobby time out clock starting now\n");
+  }
+  else if(player_check == 0)
+  {
+    lobby_timer = 0;
   }
   /*If the timer has been flagged to start, we check whether 30 seconds has
   * passed and if so we have timed out, we send a CANCEL packet and kill the users */
@@ -177,6 +190,7 @@ void play_round()
   int sum = gamedice.first + gamedice.second;
   client_moves evenodd;
   int doubles;
+  
   if(sum % 2 == 0)
   {
     evenodd = EVEN;

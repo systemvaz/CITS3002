@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
   if(argc < 2)
   {
     printf("Please supply number of players per game as program argument\n");
-    printf("Usage example: gameserver 4\n");
+    printf("Usage example: ./gameserver 4\n");
     return 0;
   }
   if(argc == 2 && atoi(argv[1]) >= 1)
@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
   else
   {
     printf("Please supply number of players per game as program argument\n");
-    printf("Usage example: gameserver 4\n");
+    printf("Usage example: ./gameserver 4\n");
     return 0;
   }
 
@@ -43,11 +43,12 @@ int main(int argc, char *argv[])
   mytimeout.tv_usec = 200;
 
   //Setup server - init_server.h
+  splash_screen();
   server_fd = create_socket(PORT);
   server = setops_bind(PORT, server_fd);
   listen_port(PORT, server_fd);
 
-  // Initialise all client sockets to 0 - init_sessions.h
+  //Initialise all client fds to 0 - init_sessions.h
   initialise_clientfd();
   //Initialise game logic variables
   num_joined = 0;
@@ -69,7 +70,7 @@ int main(int argc, char *argv[])
     check_alives();
 
     //Read and parse messages from connected clients: messaging.h
-    for(int i = 0; i < MAX_CLIENTS; i++)
+    for(int i = 0; i <= MAX_CLIENTS; i++)
     {
       if(FD_ISSET(players.fd[i], &readfds))
       {
