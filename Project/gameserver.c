@@ -11,12 +11,13 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <time.h>
-//Required for lab PC's (RHELW 7.6):
+//Required for lab PC's (RHELW 7.6)....
 #include <sys/select.h>
 
+//My include files....
 #include "structs.h"
-#include "init_server.h"
-#include "init_sessions.h"
+#include "server.h"
+#include "sessions.h"
 #include "messaging.h"
 #include "game_logic.h"
 
