@@ -1,3 +1,9 @@
+/*-------------------------------------------------
+*  CITS3002 Project 2019.
+*  Author: Alexander Varano della Vergiliana
+*  Student ID: 22268701
+*--------------------------------------------------*/
+
 static int const BUFFER_SIZE = 512;
 static int const PORT = 4444;
 static int const NUM_LIVES = 3;

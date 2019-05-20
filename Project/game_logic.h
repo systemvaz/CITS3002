@@ -1,3 +1,9 @@
+/*-------------------------------------------------
+*  CITS3002 Project 2019.
+*  Author: Alexander Varano della Vergiliana
+*  Student ID: 22268701
+*--------------------------------------------------*/
+
 /*Initialise player structure variables for a new game.
 * Then send START packet via: messaging.h */
 int setup_game()
@@ -190,7 +196,7 @@ void play_round()
   int sum = gamedice.first + gamedice.second;
   client_moves evenodd;
   int doubles;
-  
+
   if(sum % 2 == 0)
   {
     evenodd = EVEN;

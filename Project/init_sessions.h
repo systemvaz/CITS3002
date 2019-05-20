@@ -1,3 +1,9 @@
+/*-------------------------------------------------
+*  CITS3002 Project 2019.
+*  Author: Alexander Varano della Vergiliana
+*  Student ID: 22268701
+*--------------------------------------------------*/
+
 /*Set all file descriptors to 0 for all possible number of clients.*/
 void initialise_clientfd()
 {

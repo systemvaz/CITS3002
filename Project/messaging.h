@@ -1,3 +1,9 @@
+/*-------------------------------------------------
+*  CITS3002 Project 2019.
+*  Author: Alexander Varano della Vergiliana
+*  Student ID: 22268701
+*--------------------------------------------------*/
+
 /*Packet formation to be sent to client. Then sent. */
 void send_message(int i, server_messages to_send)
 {

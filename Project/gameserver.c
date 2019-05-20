@@ -1,3 +1,9 @@
+/*-------------------------------------------------
+*  CITS3002 Project 2019.
+*  Author: Alexander Varano della Vergiliana
+*  Student ID: 22268701
+*--------------------------------------------------*/
+
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/socket.h>
@@ -5,6 +11,8 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <time.h>
+//Required for lab PC's (RHELW 7.6):
+#include <sys/select.h>
 
 #include "structs.h"
 #include "init_server.h"
