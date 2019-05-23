@@ -7,6 +7,7 @@
 static int const BUFFER_SIZE = 512;
 static int const PORT = 4444;
 static int const NUM_LIVES = 3;
+//MAX_CLIENTS can be changed to suit. Tested up to 12. Possible for more.
 enum {MAX_CLIENTS = 12};
 
 //NUM_PLAYERS Modifiable at command prompt as program argument[1].

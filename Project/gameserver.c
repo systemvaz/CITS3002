@@ -29,12 +29,13 @@ int main(int argc, char *argv[])
     printf("Usage example: ./gameserver 4\n");
     return 0;
   }
-  if(argc == 2 && atoi(argv[1]) >= 1)
+  if(argc == 2 && atoi(argv[1]) >= 1 && atoi(argv[1]) <= MAX_CLIENTS)
   {
     NUM_PLAYERS = atoi(argv[1]);
   }
-  else
+  else if(argc == 2 && atoi(argv[1]) < 1 || atoi(argv[1]) > MAX_CLIENTS)
   {
+    printf("Number of players must be from 1 to %d\n", MAX_CLIENTS);
     printf("Please supply number of players per game as program argument\n");
     printf("Usage example: ./gameserver 4\n");
     return 0;
